@@ -1,0 +1,6 @@
+tier,recipient,description,percentage,amount_usd,priority
+1,Protocol Treasury / Fees,Fixed fee for protocol maintenance and smart contract upkeep,0.01,250,1
+2,Sovereign Guarantee Buffer Refill,Reimbursement of any sovereign buffer outflows used in prior months,0.082,2050,2
+3,Underwriter Tranche,Mezzanine CDS premium paid to risk-taking underwriters like Old Mutual,0.152,3800,3
+4,Super Senior Token Holders ($BRICS),Remaining CDS premium distributed pro rata to burned tokens,0.756,18900,4
+5,Residual to Reserve Account,Excess retained in buffer for future mark-to-market volatility coverage,0.00,0,5 

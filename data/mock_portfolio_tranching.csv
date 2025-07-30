@@ -1,0 +1,5 @@
+tranche,percentage,notional_amount,description,risk_level
+Super Senior ($BRICS),76,6437000,Tokenized exposure to pooled obligors,Low
+Mezzanine (Underwriters),15.2,1288200,Retained by underwriters like Old Mutual,Medium
+Junior (Sovereign/Reserve),8.8,749800,Sovereign guarantee and reserve buffer,High
+Total,100,8475000,Total portfolio notional,Portfolio 

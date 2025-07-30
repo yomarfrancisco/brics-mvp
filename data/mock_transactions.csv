@@ -1,0 +1,16 @@
+transaction_id,obligor,company,amount,currency,date,status,risk_score,industry,credit_type,underwriting_bank,terms_tenor,credit_rating,time_listed,spread_bps
+1,OBL001,Nike,125000,USD,2024-02-01,On track,0.067,Consumer Goods,Trade Receivables,First National Bank,90 days,AAA,1mo ago,32
+2,OBL002,Ford,234000,USD,2024-02-01,On track,0.089,Automotive,Trade Receivables,Standard Bank,120 days,AA,2mo ago,38
+3,OBL003,Samsung,345000,USD,2024-02-01,On track,0.076,Technology,Trade Receivables,Nedbank,150 days,AAA,3mo ago,35
+4,OBL004,Tata Motors,167000,USD,2024-02-01,On track,0.094,Automotive,Trade Receivables,ABSA Bank,180 days,A,1mo ago,42
+5,OBL005,Petrobras,289000,USD,2024-02-01,On track,0.104,Energy,Trade Receivables,Old Mutual,90 days,A,2mo ago,45
+6,OBL006,Unilever,198000,USD,2024-02-01,On track,0.071,Consumer Goods,Trade Receivables,First National Bank,120 days,AAA,3mo ago,33
+7,OBL007,Vale,234000,USD,2024-02-01,On track,0.087,Mining,Trade Receivables,Standard Bank,150 days,AA,2mo ago,39
+8,OBL008,Huawei,312000,USD,2024-02-01,On track,0.092,Technology,Trade Receivables,Nedbank,180 days,A,1mo ago,41
+9,OBL009,Volkswagen,276000,USD,2024-02-01,On track,0.078,Automotive,Trade Receivables,ABSA Bank,90 days,AA,3mo ago,36
+10,OBL010,Anglo American,189000,USD,2024-02-01,On track,0.083,Mining,Trade Receivables,Old Mutual,120 days,AA,2mo ago,37
+11,OBL011,SABMiller,145000,USD,2024-02-01,On track,0.069,Beverages,Trade Receivables,First National Bank,150 days,AAA,1mo ago,31
+12,OBL012,Sasol,223000,USD,2024-02-01,On track,0.096,Energy,Trade Receivables,Standard Bank,180 days,A,3mo ago,43
+13,OBL013,BMW,198000,USD,2024-02-01,On track,0.074,Automotive,Trade Receivables,Nedbank,90 days,AA,2mo ago,34
+14,OBL014,MTN,167000,USD,2024-02-01,On track,0.081,Telecommunications,Trade Receivables,ABSA Bank,120 days,AA,1mo ago,38
+15,OBL015,Shoprite,123000,USD,2024-02-01,On track,0.066,Retail,Trade Receivables,Old Mutual,150 days,AAA,3mo ago,30 

@@ -1,0 +1,76 @@
+transaction_id,obligor,company,amount,currency,date,status,risk_score,industry,credit_type,underwriting_bank,terms_tenor,credit_rating,time_listed,spread_bps
+1,OBL001,Nike,125000,USD,2024-02-01,On track,0.067,Consumer Goods,Trade Receivables,First National Bank,90 days,AAA,1mo ago,32
+2,OBL001,Nike,89000,USD,2024-02-02,On track,0.067,Consumer Goods,Trade Receivables,First National Bank,90 days,AAA,1mo ago,32
+3,OBL001,Nike,156000,USD,2024-02-03,On track,0.067,Consumer Goods,Trade Receivables,First National Bank,90 days,AAA,1mo ago,32
+4,OBL001,Nike,112000,USD,2024-02-04,On track,0.067,Consumer Goods,Trade Receivables,First National Bank,90 days,AAA,1mo ago,32
+5,OBL001,Nike,134000,USD,2024-02-05,On track,0.067,Consumer Goods,Trade Receivables,First National Bank,90 days,AAA,1mo ago,32
+6,OBL002,Ford,234000,USD,2024-02-01,On track,0.089,Automotive,Trade Receivables,Standard Bank,120 days,AA,2mo ago,38
+7,OBL002,Ford,198000,USD,2024-02-02,On track,0.089,Automotive,Trade Receivables,Standard Bank,120 days,AA,2mo ago,38
+8,OBL002,Ford,267000,USD,2024-02-03,On track,0.089,Automotive,Trade Receivables,Standard Bank,120 days,AA,2mo ago,38
+9,OBL002,Ford,189000,USD,2024-02-04,On track,0.089,Automotive,Trade Receivables,Standard Bank,120 days,AA,2mo ago,38
+10,OBL002,Ford,245000,USD,2024-02-05,On track,0.089,Automotive,Trade Receivables,Standard Bank,120 days,AA,2mo ago,38
+11,OBL003,Samsung,345000,USD,2024-02-01,On track,0.076,Technology,Trade Receivables,Nedbank,150 days,AAA,3mo ago,35
+12,OBL003,Samsung,298000,USD,2024-02-02,On track,0.076,Technology,Trade Receivables,Nedbank,150 days,AAA,3mo ago,35
+13,OBL003,Samsung,412000,USD,2024-02-03,On track,0.076,Technology,Trade Receivables,Nedbank,150 days,AAA,3mo ago,35
+14,OBL003,Samsung,356000,USD,2024-02-04,On track,0.076,Technology,Trade Receivables,Nedbank,150 days,AAA,3mo ago,35
+15,OBL003,Samsung,378000,USD,2024-02-05,On track,0.076,Technology,Trade Receivables,Nedbank,150 days,AAA,3mo ago,35
+16,OBL004,Tata Motors,167000,USD,2024-02-01,On track,0.094,Automotive,Trade Receivables,ABSA Bank,180 days,A,1mo ago,42
+17,OBL004,Tata Motors,145000,USD,2024-02-02,On track,0.094,Automotive,Trade Receivables,ABSA Bank,180 days,A,1mo ago,42
+18,OBL004,Tata Motors,189000,USD,2024-02-03,On track,0.094,Automotive,Trade Receivables,ABSA Bank,180 days,A,1mo ago,42
+19,OBL004,Tata Motors,156000,USD,2024-02-04,On track,0.094,Automotive,Trade Receivables,ABSA Bank,180 days,A,1mo ago,42
+20,OBL004,Tata Motors,178000,USD,2024-02-05,On track,0.094,Automotive,Trade Receivables,ABSA Bank,180 days,A,1mo ago,42
+21,OBL005,Petrobras,289000,USD,2024-02-01,On track,0.104,Energy,Trade Receivables,Old Mutual,90 days,A,2mo ago,45
+22,OBL005,Petrobras,267000,USD,2024-02-02,On track,0.104,Energy,Trade Receivables,Old Mutual,90 days,A,2mo ago,45
+23,OBL005,Petrobras,312000,USD,2024-02-03,On track,0.104,Energy,Trade Receivables,Old Mutual,90 days,A,2mo ago,45
+24,OBL005,Petrobras,298000,USD,2024-02-04,On track,0.104,Energy,Trade Receivables,Old Mutual,90 days,A,2mo ago,45
+25,OBL005,Petrobras,334000,USD,2024-02-05,On track,0.104,Energy,Trade Receivables,Old Mutual,90 days,A,2mo ago,45
+26,OBL006,Unilever,198000,USD,2024-02-01,On track,0.071,Consumer Goods,Trade Receivables,First National Bank,120 days,AAA,3mo ago,33
+27,OBL006,Unilever,178000,USD,2024-02-02,On track,0.071,Consumer Goods,Trade Receivables,First National Bank,120 days,AAA,3mo ago,33
+28,OBL006,Unilever,223000,USD,2024-02-03,On track,0.071,Consumer Goods,Trade Receivables,First National Bank,120 days,AAA,3mo ago,33
+29,OBL006,Unilever,189000,USD,2024-02-04,On track,0.071,Consumer Goods,Trade Receivables,First National Bank,120 days,AAA,3mo ago,33
+30,OBL006,Unilever,212000,USD,2024-02-05,On track,0.071,Consumer Goods,Trade Receivables,First National Bank,120 days,AAA,3mo ago,33
+31,OBL007,Vale,234000,USD,2024-02-01,On track,0.087,Mining,Trade Receivables,Standard Bank,150 days,AA,2mo ago,39
+32,OBL007,Vale,212000,USD,2024-02-02,On track,0.087,Mining,Trade Receivables,Standard Bank,150 days,AA,2mo ago,39
+33,OBL007,Vale,256000,USD,2024-02-03,On track,0.087,Mining,Trade Receivables,Standard Bank,150 days,AA,2mo ago,39
+34,OBL007,Vale,223000,USD,2024-02-04,On track,0.087,Mining,Trade Receivables,Standard Bank,150 days,AA,2mo ago,39
+35,OBL007,Vale,245000,USD,2024-02-05,On track,0.087,Mining,Trade Receivables,Standard Bank,150 days,AA,2mo ago,39
+36,OBL008,Huawei,312000,USD,2024-02-01,On track,0.092,Technology,Trade Receivables,Nedbank,180 days,A,1mo ago,41
+37,OBL008,Huawei,289000,USD,2024-02-02,On track,0.092,Technology,Trade Receivables,Nedbank,180 days,A,1mo ago,41
+38,OBL008,Huawei,334000,USD,2024-02-03,On track,0.092,Technology,Trade Receivables,Nedbank,180 days,A,1mo ago,41
+39,OBL008,Huawei,298000,USD,2024-02-04,On track,0.092,Technology,Trade Receivables,Nedbank,180 days,A,1mo ago,41
+40,OBL008,Huawei,323000,USD,2024-02-05,On track,0.092,Technology,Trade Receivables,Nedbank,180 days,A,1mo ago,41
+41,OBL009,Volkswagen,276000,USD,2024-02-01,On track,0.078,Automotive,Trade Receivables,ABSA Bank,90 days,AA,3mo ago,36
+42,OBL009,Volkswagen,245000,USD,2024-02-02,On track,0.078,Automotive,Trade Receivables,ABSA Bank,90 days,AA,3mo ago,36
+43,OBL009,Volkswagen,298000,USD,2024-02-03,On track,0.078,Automotive,Trade Receivables,ABSA Bank,90 days,AA,3mo ago,36
+44,OBL009,Volkswagen,267000,USD,2024-02-04,On track,0.078,Automotive,Trade Receivables,ABSA Bank,90 days,AA,3mo ago,36
+45,OBL009,Volkswagen,289000,USD,2024-02-05,On track,0.078,Automotive,Trade Receivables,ABSA Bank,90 days,AA,3mo ago,36
+46,OBL010,Anglo American,189000,USD,2024-02-01,On track,0.083,Mining,Trade Receivables,Old Mutual,120 days,AA,2mo ago,37
+47,OBL010,Anglo American,167000,USD,2024-02-02,On track,0.083,Mining,Trade Receivables,Old Mutual,120 days,AA,2mo ago,37
+48,OBL010,Anglo American,212000,USD,2024-02-03,On track,0.083,Mining,Trade Receivables,Old Mutual,120 days,AA,2mo ago,37
+49,OBL010,Anglo American,178000,USD,2024-02-04,On track,0.083,Mining,Trade Receivables,Old Mutual,120 days,AA,2mo ago,37
+50,OBL010,Anglo American,201000,USD,2024-02-05,On track,0.083,Mining,Trade Receivables,Old Mutual,120 days,AA,2mo ago,37
+51,OBL011,SABMiller,145000,USD,2024-02-01,On track,0.069,Beverages,Trade Receivables,First National Bank,150 days,AAA,1mo ago,31
+52,OBL011,SABMiller,123000,USD,2024-02-02,On track,0.069,Beverages,Trade Receivables,First National Bank,150 days,AAA,1mo ago,31
+53,OBL011,SABMiller,167000,USD,2024-02-03,On track,0.069,Beverages,Trade Receivables,First National Bank,150 days,AAA,1mo ago,31
+54,OBL011,SABMiller,134000,USD,2024-02-04,On track,0.069,Beverages,Trade Receivables,First National Bank,150 days,AAA,1mo ago,31
+55,OBL011,SABMiller,156000,USD,2024-02-05,On track,0.069,Beverages,Trade Receivables,First National Bank,150 days,AAA,1mo ago,31
+56,OBL012,Sasol,223000,USD,2024-02-01,On track,0.096,Energy,Trade Receivables,Standard Bank,180 days,A,3mo ago,43
+57,OBL012,Sasol,198000,USD,2024-02-02,On track,0.096,Energy,Trade Receivables,Standard Bank,180 days,A,3mo ago,43
+58,OBL012,Sasol,245000,USD,2024-02-03,On track,0.096,Energy,Trade Receivables,Standard Bank,180 days,A,3mo ago,43
+59,OBL012,Sasol,212000,USD,2024-02-04,On track,0.096,Energy,Trade Receivables,Standard Bank,180 days,A,3mo ago,43
+60,OBL012,Sasol,234000,USD,2024-02-05,On track,0.096,Energy,Trade Receivables,Standard Bank,180 days,A,3mo ago,43
+61,OBL013,BMW,198000,USD,2024-02-01,On track,0.074,Automotive,Trade Receivables,Nedbank,90 days,AA,2mo ago,34
+62,OBL013,BMW,178000,USD,2024-02-02,On track,0.074,Automotive,Trade Receivables,Nedbank,90 days,AA,2mo ago,34
+63,OBL013,BMW,223000,USD,2024-02-03,On track,0.074,Automotive,Trade Receivables,Nedbank,90 days,AA,2mo ago,34
+64,OBL013,BMW,189000,USD,2024-02-04,On track,0.074,Automotive,Trade Receivables,Nedbank,90 days,AA,2mo ago,34
+65,OBL013,BMW,212000,USD,2024-02-05,On track,0.074,Automotive,Trade Receivables,Nedbank,90 days,AA,2mo ago,34
+66,OBL014,MTN,167000,USD,2024-02-01,On track,0.081,Telecommunications,Trade Receivables,ABSA Bank,120 days,AA,1mo ago,38
+67,OBL014,MTN,145000,USD,2024-02-02,On track,0.081,Telecommunications,Trade Receivables,ABSA Bank,120 days,AA,1mo ago,38
+68,OBL014,MTN,189000,USD,2024-02-03,On track,0.081,Telecommunications,Trade Receivables,ABSA Bank,120 days,AA,1mo ago,38
+69,OBL014,MTN,156000,USD,2024-02-04,On track,0.081,Telecommunications,Trade Receivables,ABSA Bank,120 days,AA,1mo ago,38
+70,OBL014,MTN,178000,USD,2024-02-05,On track,0.081,Telecommunications,Trade Receivables,ABSA Bank,120 days,AA,1mo ago,38
+71,OBL015,Shoprite,123000,USD,2024-02-01,On track,0.066,Retail,Trade Receivables,Old Mutual,150 days,AAA,3mo ago,30
+72,OBL015,Shoprite,112000,USD,2024-02-02,On track,0.066,Retail,Trade Receivables,Old Mutual,150 days,AAA,3mo ago,30
+73,OBL015,Shoprite,145000,USD,2024-02-03,On track,0.066,Retail,Trade Receivables,Old Mutual,150 days,AAA,3mo ago,30
+74,OBL015,Shoprite,134000,USD,2024-02-04,On track,0.066,Retail,Trade Receivables,Old Mutual,150 days,AAA,3mo ago,30
+75,OBL015,Shoprite,156000,USD,2024-02-05,On track,0.066,Retail,Trade Receivables,Old Mutual,150 days,AAA,3mo ago,30 

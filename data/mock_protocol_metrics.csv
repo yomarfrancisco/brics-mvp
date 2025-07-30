@@ -1,0 +1,17 @@
+metric,value,component,description
+brics_price,1.023,USD + Yield,Soft peg to USD with yield adjustments
+brics_yield_24h,2.87,CDS + Sovereign,Monthly yield (annualized 34.4%)
+apy_per_brics,34.4,Annualized,Target APY 25-35% (CDS premiums + sovereign)
+capital_efficiency,8.7,Unlock Ratio,Overcollateralization 2-10% (8.7x leverage)
+weighted_pd,0.083,Default Risk,Weighted default probability per $BRICS
+cds_premiums_monthly,2.14,CDS Component,Monthly CDS premium (1.5-2.0% per 90-180 days)
+sovereign_yield_monthly,0.73,Sovereign Component,Monthly sovereign guarantee yield component
+total_notional,8475000,Underwritten,Total notional amount underwritten
+tokens_minted,1000000,Supply,Total $BRICS tokens minted (super senior only)
+zar_rate,18.47,Exchange Rate,Current USD-ZAR exchange rate
+overcollateralization,0.115,Collateral Ratio,11.5% collateral backing (8.7x leverage)
+protocol_fee,0.01,Protocol Fee,1% protocol treasury fee
+underwriter_share,0.152,Underwriter Payment,15.2% to underwriter tranche
+sovereign_buffer,0.082,Sovereign Buffer,8.2% sovereign guarantee buffer
+monthly_yield_total,2.87,Total Monthly,Combined monthly yield (CDS + Sovereign)
+monthly_to_apy_multiplier,12,Annualization,Monthly yield × 12 = APY 

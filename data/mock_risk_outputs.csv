@@ -1,0 +1,16 @@
+company,xgboost_pd,levy_copula_tail_risk,cds_spread,credit_rating,industry
+Nike,0.067,0.021,32,AAA,Consumer Goods
+Ford,0.089,0.034,38,AA,Automotive
+Samsung,0.076,0.028,35,AAA,Technology
+Tata Motors,0.094,0.041,42,A,Automotive
+Petrobras,0.104,0.047,45,A,Energy
+Unilever,0.071,0.025,33,AAA,Consumer Goods
+Vale,0.087,0.033,39,AA,Mining
+Huawei,0.092,0.039,41,A,Technology
+Volkswagen,0.078,0.029,36,AA,Automotive
+Anglo American,0.083,0.032,37,AA,Mining
+SABMiller,0.069,0.023,31,AAA,Beverages
+Sasol,0.096,0.043,43,A,Energy
+BMW,0.074,0.027,34,AA,Automotive
+MTN,0.081,0.031,38,AA,Telecommunications
+Shoprite,0.066,0.022,30,AAA,Retail 
