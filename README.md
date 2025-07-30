@@ -1,171 +1,136 @@
-# BRICS MVP – Internal Risk & Yield Engine
+# BRICS Protocol Investment Dashboard
 
-## Overview
-This repository contains the internal-facing MVP for the $BRICS protocol, designed to provide comprehensive risk analytics, yield tracking, and portfolio management capabilities for pre-seed and seed investors conducting due diligence.
+A professional due diligence and monitoring dashboard for early investors in the $BRICS synthetic credit protocol.
 
 ## 🚀 Features
 
-### Core Functionality
-- **Real-time Data Simulation**: Tiered data updates (3s, 45s, 10min)
-- **Advanced Analytics**: VaR, stress testing, correlation analysis, portfolio optimization
-- **API Integration**: Bank data connection framework with quality monitoring
-- **Compliance Tracking**: Regulatory compliance monitoring and audit trails
-- **Performance Monitoring**: System health and performance tracking
-- **Interactive Dashboard**: Streamlit-based visualization with 5 comprehensive tabs
-
-### Dashboard Sections
-1. **💰 Unit Economics**: Yield mechanics, cash flow waterfall, APY calculations
-2. **📈 Portfolio Analysis**: Company drill-down, transaction history, risk metrics
-3. **🔬 Technical Details**: AI/ML models, API connections, data streams
-4. **📊 Advanced Analytics**: Risk heatmaps, stress testing, correlation analysis
-5. **📋 Compliance & Docs**: Regulatory tracking, audit trails, documentation
+- **📊 Real-time $BRICS Price Monitoring** - Yield-inclusive pricing with volatility simulation
+- **📈 Portfolio Analytics** - Risk analysis, tranching, and obligor performance
+- **💰 Unit Economics** - Token mechanics, yield breakdown, and cash flow waterfall
+- **🔍 Advanced Analytics** - VaR, stress testing, concentration risk, correlation matrix
+- **📋 Compliance & Documentation** - Regulatory tracking, audit trail, document management
+- **🔌 API Integration** - Bank data stream simulation and data quality metrics
+- **🤖 AI/ML Analytics** - Credit risk models, yield forecasting, and backtesting
+- **⚡ Performance Monitoring** - System and process metrics
+- **🎨 Modern UI/UX** - Sidebar navigation, grid layout, and professional design
 
 ## 🛠️ Quick Start
 
-### Option 1: Automated Deployment
-```bash
-python deploy.py
-```
+### Prerequisites
+- Python 3.8+
+- pip
 
-### Option 2: Manual Setup
-1. Install dependencies: `pip install -r requirements.txt`
-2. Run tests: `python tests/test_dashboard.py`
-3. Start dashboard: `streamlit run dashboard/app.py`
-4. Access at: http://localhost:8501
+### Installation
 
-## 📊 System Architecture
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/yomarfrancisco/brics-mvp.git
+   cd brics-mvp
+   ```
 
-### Data Flow
-```
-Bank APIs → Data Processing → Risk Models → Dashboard → Real-time Updates
-     ↓              ↓              ↓              ↓              ↓
-Mock Data → Quality Monitor → Analytics → Visualization → Performance Monitor
-```
+2. **Install dependencies:**
+   ```bash
+   pip install -r requirements.txt
+   ```
 
-### Key Components
-- **Data Layer**: Mock transaction data, protocol metrics, price history
-- **Analytics Engine**: XGBoost credit scoring, Lévy copula tail risk
-- **API Framework**: Bank connection simulation, data quality monitoring
-- **Compliance System**: Regulatory tracking, audit trails, documentation
-- **Performance Monitor**: System health, processing metrics, alerts
+3. **Run the dashboard:**
+   ```bash
+   streamlit run dashboard/app.py --server.port 8501 --server.address localhost
+   ```
 
-## 📁 Repository Structure
+4. **Open in your browser:**  
+   [http://localhost:8501](http://localhost:8501)
+
+## 📁 Project Structure
+
 ```
 brics-mvp/
-├── dashboard/          # Streamlit dashboard application
-│   └── app.py         # Main dashboard interface
-├── data/              # Mock data files
-│   ├── mock_company_summary.csv
-│   ├── mock_protocol_metrics.csv
+├── dashboard/          # Streamlit application
+│   └── app.py         # Main dashboard file
+├── engine/             # Core analytics modules
+│   ├── advanced_analytics.py
+│   ├── api_integration.py
+│   ├── ml_predictions.py
+│   ├── performance_monitor.py
+│   └── report_generator.py
+├── data/               # Mock data files
 │   ├── mock_brics_price.csv
-│   └── ...            # Additional data files
-├── engine/            # Core analytics engine
-│   ├── api_integration.py      # Bank API simulation
-│   ├── advanced_analytics.py   # Risk modeling
-│   ├── performance_monitor.py  # System monitoring
-│   └── ...            # Additional engine modules
-├── docs/              # Documentation & compliance
-│   └── compliance_tracker.py   # Regulatory tracking
-├── tests/             # Comprehensive test suite
-│   └── test_dashboard.py      # All system tests
-├── deploy.py          # Automated deployment script
-├── requirements.txt   # Python dependencies
-└── README.md         # This file
+│   ├── mock_company_summary.csv
+│   └── ...
+├── docs/               # Documentation and compliance
+│   └── compliance_tracker.py
+├── tests/              # Test scripts
+│   └── test_dashboard.py
+├── requirements.txt    # Python dependencies
+└── README.md          # This file
 ```
 
-## 🧪 Testing
+## 🎯 Key Features
 
-### Run All Tests
+### Dashboard Pages
+- **Dashboard** - Executive summary with prominent price display
+- **Unit Economics** - Token mechanics and yield breakdown
+- **Portfolio Analysis** - Risk structure and obligor analysis  
+- **Advanced Analytics** - Risk analytics and performance monitoring
+- **Compliance & Docs** - Compliance tracking and documentation
+- **API Integration** - Connection status and data quality
+- **AI/ML Analytics** - Credit risk models and yield forecasting
+
+### Technical Highlights
+- **Real-time Data Simulation** - Ultra-fast price updates with volatility
+- **Yield-Inclusive Pricing** - $1.00 peg + yield components + volatility
+- **Risk Analytics** - VaR, stress testing, concentration risk (HHI)
+- **ML Predictions** - XGBoost credit risk, yield forecasting
+- **Performance Monitoring** - System metrics, uptime tracking
+- **Professional UI** - Grid-based layouts, section cards, responsive design
+
+## 🔧 Development
+
+### Running Tests
 ```bash
-python tests/test_dashboard.py
+python -m pytest tests/
 ```
 
-### Test Coverage
-- ✅ Data loading and validation
-- ✅ API integration functionality
-- ✅ Advanced analytics calculations
-- ✅ Compliance tracking
-- ✅ Real-time simulation
-- ✅ Performance monitoring
+### Adding New Features
+1. Create feature branch: `git checkout -b feature/new-feature`
+2. Make changes and test
+3. Commit: `git commit -m "Add new feature"`
+4. Push: `git push origin feature/new-feature`
+5. Create pull request
 
-## 📈 Performance Monitoring
+## 📊 Data Sources
 
-### System Metrics
-- CPU and memory usage
-- Process performance
-- Data processing times
-- Dashboard response times
+The dashboard currently uses mock data for demonstration:
+- **$BRICS Price Data** - Historical price with yield components
+- **Company Summary** - Obligor profiles and credit metrics
+- **Portfolio Tranching** - Risk structure and exposure
+- **Protocol Metrics** - APY, capital efficiency, weighted PD
+- **Risk Outputs** - XGBoost predictions and risk scores
+- **Transactions** - Extended transaction history
+- **Waterfall** - Cash flow distribution
 
-### Alerts
-- High CPU usage (>80%)
-- Critical memory usage (>85%)
-- High disk usage (>90%)
-- Slow operations (>1s)
+## 🤝 Contributing
 
-## 🔒 Compliance & Security
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
 
-### Regulatory Compliance
-- Basel III capital requirements
-- KYC/AML procedures
-- Data protection (POPIA)
-- Financial Services Provider license
+## 📝 License
 
-### Audit Trail
-- User action logging
-- System event tracking
-- Compliance report generation
-- Documentation management
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## 📚 Documentation
+## 👨‍💻 Author
 
-### Key Documents
-- Data Protection Policy
-- KYC/AML Procedures
-- Monthly Compliance Reports
-- Investor Due Diligence Reports
+**Yomar Francisco** - [@yomarfrancisco](https://github.com/yomarfrancisco)
 
-### Report Generation
-- Automated compliance reports
-- Investor due diligence reports
-- Risk assessment reports
-- Performance summaries
+## 🙏 Acknowledgments
 
-## 🔗 References
-- [BRICS GitBook](https://ygors-personal-organization.gitbook.io/untitled)
-- [XGBoost Credit Risk Paper](https://docsend.com/view/q6vmidxjqhkqg3t3/d/bky7jxjg8qbd8tcm)
-- [Lévy Copula Tail Risk Paper](https://docsend.com/view/q6vmidxjqhkqg3t3/d/g97kbpjxvw948vrx)
-
-## 🎯 Use Cases
-
-### For Investors
-- Comprehensive due diligence tool
-- Real-time portfolio monitoring
-- Risk assessment and analysis
-- Regulatory compliance verification
-
-### For Internal Team
-- Portfolio management dashboard
-- Risk monitoring and alerts
-- Performance tracking
-- Compliance reporting
-
-## 🚀 Deployment
-
-### Production Ready Features
-- Comprehensive test suite
-- Performance monitoring
-- Error handling and logging
-- Automated deployment script
-- Documentation management
-
-### Scalability
-- Modular architecture
-- Real-time data processing
-- API integration framework
-- Performance optimization
+- Built for institutional due diligence and investor monitoring
+- Designed for early-stage synthetic credit protocol analysis
+- Focus on professional presentation and data clarity
 
 ---
 
-**Status**: ✅ Production Ready MVP  
-**Last Updated**: December 2024  
-**Version**: 1.0.0 
+**Note:** This dashboard is designed for due diligence and monitoring purposes, not for trading. Past performance does not guarantee future results. 
