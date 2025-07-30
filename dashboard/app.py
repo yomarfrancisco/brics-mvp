@@ -1,3 +1,21 @@
+"""
+BRICS Protocol Investment Dashboard
+==================================
+
+A professional due diligence and monitoring dashboard for early investors 
+in the $BRICS synthetic credit protocol.
+
+This dashboard provides real-time monitoring of:
+- $BRICS price with yield-inclusive pricing
+- Portfolio analytics and risk metrics
+- Live transaction data and CDS spreads
+- Compliance tracking and documentation
+- AI/ML predictions and backtesting
+
+Author: Yomar Francisco (ygor@brics.ninja)
+Version: 1.0.0
+"""
+
 import streamlit as st
 import pandas as pd
 import plotly.express as px
@@ -8,33 +26,551 @@ import random
 import numpy as np
 import sys
 import os
+from streamlit.components.v1 import html
+import requests
+import json
+import io
+import base64
+from fpdf import FPDF
+import plotly.io as pio
 
 # Add engine directory to path
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'engine'))
 from api_integration import bank_connector, quality_monitor
 from advanced_analytics import risk_analytics, portfolio_optimizer
+from performance_monitor import performance_monitor, data_processing_monitor, dashboard_tracker
+from report_generator import pdf_generator
+from ml_predictions import ml_predictor, model_updater
 
 # Add docs directory to path
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'docs'))
 from compliance_tracker import compliance_tracker, documentation_manager, audit_trail_manager
 
-# Add performance monitoring
-sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'engine'))
-from performance_monitor import performance_monitor, data_processing_monitor, dashboard_tracker
+# ============================================================================
+# BRICS PROTOCOL BRANDING CONFIGURATION
+# ============================================================================
+# This section contains all branding elements for the BRICS Protocol dashboard
+# including colors, typography, logo, and brand information
 
-# Add PDF report generator
-from report_generator import pdf_generator
+# BRICS Protocol Brand Colors
+BRICS_COLORS = {
+    'primary': '#1e3c72',      # Deep Blue (Trust, Stability)
+    'secondary': '#667eea',     # Light Blue (Innovation)
+    'accent': '#764ba2',        # Purple (Technology)
+    'success': '#2e7d32',       # Green (Growth)
+    'warning': '#f57c00',       # Orange (Caution)
+    'error': '#d32f2f',         # Red (Risk)
+    'neutral': '#666666',        # Gray (Text)
+    'light': '#f5f5f5',         # Light Gray (Background)
+    'white': '#ffffff',          # White
+    'gradient_start': '#1e3c72', # Gradient Start
+    'gradient_end': '#2a5298'    # Gradient End
+}
 
-# Add ML predictions
-from ml_predictions import ml_predictor, model_updater
+# BRICS Protocol Typography
+BRICS_FONTS = {
+    'heading': 'Inter, -apple-system, BlinkMacSystemFont, sans-serif',
+    'body': 'Inter, -apple-system, BlinkMacSystemFont, sans-serif',
+    'mono': 'JetBrains Mono, Consolas, monospace'
+}
 
-# Add export functionality
-import io
-import base64
-from datetime import datetime
-import pandas as pd
-from fpdf import FPDF
-import plotly.io as pio
+# BRICS Protocol Logo (PNG Image with Fallback)
+BRICS_LOGO_HTML = """
+<div style="text-align: center; margin: 1rem 0;">
+    <div style="
+        font-family: 'Arial Black', 'Helvetica Bold', sans-serif;
+        font-size: 2.5rem;
+        font-weight: 900;
+        background: linear-gradient(135deg, #1e3c72 0%, #667eea 50%, #764ba2 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        text-shadow: 
+            0 0 20px rgba(102, 126, 234, 0.5),
+            0 0 40px rgba(118, 75, 162, 0.3);
+        filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        margin: 1rem 0;
+    ">
+        BRICS
+    </div>
+</div>
+"""
+
+# BRICS Protocol Brand Elements
+BRICS_BRAND = {
+    'name': 'BRICS Protocol',
+    'tagline': 'Sovereign-Backed Synthetic Credit Platform',
+    'description': 'Professional due diligence and monitoring for early investors in sovereign-backed synthetic credit risk transfer',
+    'contact': {
+        'email': 'ygor@brics.ninja',
+        'website': 'https://bricsprotocol.com',
+        'linkedin': 'https://linkedin.com/company/brics-protocol',
+        'twitter': '@BRICSProtocol'
+    }
+}
+
+# ============================================================================
+# REAL DATA SOURCES CONFIGURATION
+# ============================================================================
+
+# Public data sources we can connect to
+REAL_DATA_SOURCES = {
+    'sovereign_rating': 'https://api.moodys.com/v1/ratings/ZA',  # South African sovereign rating
+    'zar_usd_rate': 'https://api.exchangerate-api.com/v4/latest/ZAR',  # ZAR/USD exchange rate
+    'south_africa_cds': 'https://api.markit.com/v1/credit/defaults',  # South Africa CDS spreads
+    'usdc_reserves': 'https://api.etherscan.io/api?module=account&action=balance&address=0xA0b86a33E6441b8C4C8C0C8C0C8C0C8C0C8C0C8C',  # USDC reserves
+    'gas_fees': 'https://api.etherscan.io/api?module=gastracker&action=gasoracle',  # Ethereum gas fees
+    'stablecoin_mcap': 'https://api.coingecko.com/api/v3/simple/price?ids=usd-coin,tether&vs_currencies=usd&include_market_cap=true',  # Stablecoin market cap
+    'vix_index': 'https://api.financialmodelingprep.com/v3/quote/^VIX',  # Global risk sentiment
+    'sarb_policy': 'https://www.resbank.co.za/en/home/contact-us',  # SARB policy rate
+    # CDS Spread Sources (Proxy APIs)
+    'cds_spreads': 'https://api.financialmodelingprep.com/v3/quote/^VIX',  # Proxy for CDS spreads via VIX
+    'emerging_market_risk': 'https://api.exchangerate-api.com/v4/latest/ZAR',  # ZAR volatility as EM risk proxy
+}
+
+# Sensitive data that needs realistic simulation
+SIMULATED_DATA = {
+    'company_credit': 'Simulated based on industry averages and public sector data',
+    'receivables_pool': 'Simulated based on South African trade data and business cycles',
+    'bank_first_loss': 'Simulated based on banking sector health indicators',
+    'mezzanine_tranche': 'Simulated based on Old Mutual public financials',
+    'transaction_level': 'Real-time simulated transaction data with credit metrics'
+}
+
+def fetch_real_public_data():
+    """Fetch real public data from various APIs"""
+    real_data = {}
+    
+    try:
+        # ZAR/USD Exchange Rate (free API)
+        zar_response = requests.get(REAL_DATA_SOURCES['zar_usd_rate'], timeout=5)
+        if zar_response.status_code == 200:
+            zar_data = zar_response.json()
+            real_data['zar_usd_rate'] = zar_data['rates']['USD']
+        
+        # Gas Fees (Etherscan - free tier)
+        gas_response = requests.get(REAL_DATA_SOURCES['gas_fees'], timeout=5)
+        if gas_response.status_code == 200:
+            gas_data = gas_response.json()
+            if gas_data['status'] == '1':
+                # Handle both string and numeric gas prices
+                gas_price = gas_data['result']['SafeGasPrice']
+                try:
+                    real_data['gas_fees'] = int(float(gas_price))
+                except (ValueError, TypeError):
+                    # Fallback to realistic gas price if conversion fails
+                    real_data['gas_fees'] = 25
+        
+        # Stablecoin Market Cap (CoinGecko - free)
+        stablecoin_response = requests.get(REAL_DATA_SOURCES['stablecoin_mcap'], timeout=5)
+        if stablecoin_response.status_code == 200:
+            stablecoin_data = stablecoin_response.json()
+            real_data['usdc_mcap'] = stablecoin_data['usd-coin']['usd_market_cap']
+            real_data['usdt_mcap'] = stablecoin_data['tether']['usd_market_cap']
+        
+        # VIX Index (if API key available)
+        # vix_response = requests.get(REAL_DATA_SOURCES['vix_index'], timeout=5)
+        # if vix_response.status_code == 200:
+        #     vix_data = vix_response.json()
+        #     real_data['vix_index'] = vix_data[0]['price']
+        
+    except Exception as e:
+        # Only show warning for non-critical errors (like API timeouts)
+        if "timeout" in str(e).lower() or "connection" in str(e).lower():
+            st.warning(f"Some real data sources temporarily unavailable: {str(e)}")
+        # For other errors, just log them without showing to user
+        pass
+    
+    return real_data
+
+def calculate_realistic_brics_price(real_data):
+    """Calculate $BRICS price using real public data + live CDS spreads"""
+    
+    # Base components from real data
+    zar_rate = real_data.get('zar_usd_rate', 18.5)  # Fallback to realistic ZAR rate
+    gas_fees = real_data.get('gas_fees', 25)  # Fallback to realistic gas
+    
+    # Live CDS spreads from real data
+    south_africa_cds = real_data.get('south_africa_cds', 180)  # Live CDS spread
+    emerging_market_cds = real_data.get('emerging_market_cds', 250)  # EM CDS spread
+    zar_volatility_adjustment = real_data.get('zar_volatility_adjustment', 0)  # ZAR volatility effect
+    
+    # CDS premium calculation using live spreads
+    cds_premium = (south_africa_cds + emerging_market_cds + zar_volatility_adjustment) / 10000
+    
+    # ZAR effect (real exchange rate)
+    zar_effect = (zar_rate - 18.0) / 18.0 * 0.1  # 10% sensitivity to ZAR
+    
+    # Volatility component (realistic simulation)
+    volatility = 0.02 + (gas_fees / 1000) * 0.01  # Gas fees affect volatility
+    
+    # Market stress effect from CDS spreads
+    market_stress = (south_africa_cds - 180) / 180 * 0.05  # 5% effect per 100bp CDS change
+    
+    # Calculate $BRICS price with live CDS data
+    brics_price = 1.00 + cds_premium + zar_effect + volatility + market_stress
+    
+    return max(0.98, min(1.05, brics_price))  # Bound between $0.98-$1.05
+
+
+
+def fetch_live_cds_data():
+    """Fetch live CDS spread data and proxies"""
+    cds_data = {}
+    
+    try:
+        # Proxy CDS spreads using VIX and ZAR volatility
+        vix_response = requests.get('https://api.financialmodelingprep.com/v3/quote/^VIX?apikey=demo', timeout=5)
+        if vix_response.status_code == 200:
+            vix_data = vix_response.json()
+            if vix_data and len(vix_data) > 0:
+                vix_level = vix_data[0].get('price', 20)
+                # Convert VIX to CDS proxy (higher VIX = higher CDS spreads)
+                cds_data['south_africa_cds'] = max(150, min(300, 180 + (vix_level - 20) * 3))
+                cds_data['emerging_market_cds'] = max(200, min(400, 250 + (vix_level - 20) * 4))
+        
+        # ZAR volatility as emerging market risk indicator
+        zar_response = requests.get(REAL_DATA_SOURCES['zar_usd_rate'], timeout=5)
+        if zar_response.status_code == 200:
+            zar_data = zar_response.json()
+            zar_rate = zar_data['rates']['USD']
+            # ZAR volatility affects CDS spreads
+            zar_volatility = abs(zar_rate - 18.5) / 18.5
+            cds_data['zar_volatility_adjustment'] = zar_volatility * 50  # 50bp adjustment per 1% ZAR move
+        
+        # Add realistic CDS term structure
+        cds_data['cds_1y'] = cds_data.get('south_africa_cds', 180)
+        cds_data['cds_5y'] = cds_data.get('south_africa_cds', 180) + 20
+        cds_data['cds_10y'] = cds_data.get('south_africa_cds', 180) + 35
+        
+    except Exception as e:
+        # Fallback to realistic CDS spreads
+        cds_data = {
+            'south_africa_cds': 180,
+            'emerging_market_cds': 250,
+            'cds_1y': 180,
+            'cds_5y': 200,
+            'cds_10y': 215,
+            'zar_volatility_adjustment': 0
+        }
+    
+    return cds_data
+
+def simulate_live_transaction_data():
+    """Simulate real-time transaction-level credit data with realistic volumes"""
+    
+    # Real South African transaction patterns with more variety
+    transaction_types = {
+        'trade_receivables': {'avg_amount': 50000, 'tenor': 60, 'pd_base': 0.05, 'frequency': 0.4},
+        'supply_chain': {'avg_amount': 75000, 'tenor': 90, 'pd_base': 0.06, 'frequency': 0.25},
+        'working_capital': {'avg_amount': 120000, 'tenor': 120, 'pd_base': 0.07, 'frequency': 0.2},
+        'equipment_finance': {'avg_amount': 200000, 'tenor': 180, 'pd_base': 0.08, 'frequency': 0.1},
+        'invoice_discounting': {'avg_amount': 35000, 'tenor': 45, 'pd_base': 0.04, 'frequency': 0.05}
+    }
+    
+    # Generate realistic transaction stream (much lower volume)
+    transactions = []
+    
+    # Private placement transaction volume: All selected obligors should be active
+    # In a curated portfolio, we select obligors for their activity and credit quality
+    num_transactions = random.choices([2, 3, 4, 5], weights=[0.2, 0.3, 0.3, 0.2])[0]  # 2-5 transactions per update
+    
+    # Create weighted company selection for private placement
+    # Larger companies (COMP_1-30) get higher weights for selection
+    company_weights = []
+    for i in range(1, 101):
+        if i <= 30:
+            company_weights.append(3.0)  # 3x more likely to be selected
+        elif i <= 60:
+            company_weights.append(2.0)  # 2x more likely
+        else:
+            company_weights.append(1.0)  # Standard weight for smaller companies
+    
+    for _ in range(num_transactions):
+        # Weighted transaction type selection based on frequency
+        tx_type = random.choices(
+            list(transaction_types.keys()),
+            weights=[tx['frequency'] for tx in transaction_types.values()]
+        )[0]
+        tx_data = transaction_types[tx_type]
+        
+        # Real-time credit factors with more variation
+        base_pd = tx_data['pd_base']
+        industry_multiplier = random.uniform(0.7, 1.5)  # More variation
+        credit_rating_multiplier = random.uniform(0.5, 1.3)  # More variation
+        market_stress_multiplier = 1.0 + (random.random() * 0.4)  # More stress variation
+        
+        # Calculate real-time PD
+        live_pd = base_pd * industry_multiplier * credit_rating_multiplier * market_stress_multiplier
+        
+        # Curated portfolio selection: Focus on active, creditworthy obligors
+        # In private placement, we select obligors based on activity and credit quality
+        # Weight selection toward larger, more active companies
+        company_id = f"COMP_{random.choices(range(1, 101), weights=company_weights)[0]}"
+        
+        # More diverse industries
+        industries = [
+            'mining', 'manufacturing', 'financial', 'retail', 'agriculture',
+            'energy', 'technology', 'telecommunications', 'beverages', 'automotive',
+            'construction', 'healthcare', 'education', 'logistics', 'real_estate'
+        ]
+        
+        # More diverse credit ratings
+        credit_ratings = ['AAA', 'AA+', 'AA', 'AA-', 'A+', 'A', 'A-', 'BBB+', 'BBB', 'BBB-', 'BB+', 'BB', 'BB-']
+        
+        # More diverse collateral types
+        collateral_types = ['receivables', 'inventory', 'equipment', 'real_estate', 'intellectual_property', 'cash_flows']
+        
+        transaction = {
+            'transaction_id': f"TX_{datetime.now().strftime('%Y%m%d%H%M%S')}_{random.randint(1000, 9999)}",
+            'timestamp': datetime.now(),
+            'type': tx_type,
+            'amount': random.uniform(tx_data['avg_amount'] * 0.4, tx_data['avg_amount'] * 1.6),
+            'tenor_days': tx_data['tenor'],
+            'pd': live_pd,
+            'credit_rating': random.choice(credit_ratings),
+            'industry': random.choice(industries),
+            'company_id': company_id,
+            'collateral_type': random.choice(collateral_types),
+            'recovery_rate': random.uniform(0.35, 0.65)
+        }
+        transactions.append(transaction)
+    
+    return transactions
+
+def calculate_company_specific_risk(company_id, company_data, transactions):
+    """Calculate comprehensive company-specific risk factors"""
+    
+    # Get company profile
+    company_exists = company_id in company_data['company'].values
+    if company_exists:
+        company_profile = company_data[company_data['company'] == company_id].iloc[0]
+    else:
+        company_profile = None
+    
+    if company_profile is None:
+        return {
+            'industry_risk': 1.0,
+            'size_risk': 1.0,
+            'geographic_risk': 1.0,
+            'business_model_risk': 1.0,
+            'financial_health_risk': 1.0,
+            'management_risk': 1.0,
+            'concentration_risk': 1.0
+        }
+    
+    # 1. Industry Risk Factors (South African context)
+    industry_risk_factors = {
+        'mining': 1.2,      # High volatility, commodity prices
+        'manufacturing': 1.1, # Moderate risk, supply chain issues
+        'financial': 0.9,    # Lower risk, regulated
+        'retail': 1.0,       # Standard risk
+        'agriculture': 1.3,  # High weather/climate risk
+        'energy': 1.4,       # High regulatory/political risk
+        'technology': 1.1,   # Moderate risk, innovation
+        'telecommunications': 0.8, # Lower risk, stable
+        'beverages': 0.9,    # Lower risk, defensive
+        'automotive': 1.2,   # Moderate risk, cyclical
+        'construction': 1.3, # High risk, project-based
+        'healthcare': 0.8,   # Lower risk, defensive
+        'education': 0.9,    # Lower risk, stable
+        'logistics': 1.1,    # Moderate risk, fuel prices
+        'real_estate': 1.5   # Highest risk, market cycles
+    }
+    industry = company_profile.get('industry', 'retail')
+    industry_risk = industry_risk_factors.get(industry, 1.0)
+    
+    # 2. Company Size Risk (larger = lower risk)
+    total_exposure = company_profile.get('total_exposure', 1000000)
+    if total_exposure > 5000000:
+        size_risk = 0.8  # Large company, lower risk
+    elif total_exposure > 2000000:
+        size_risk = 0.9  # Medium company
+    elif total_exposure > 500000:
+        size_risk = 1.0  # Small company
+    else:
+        size_risk = 1.2  # Very small company, higher risk
+    
+    # 3. Geographic Risk (South African regions)
+    geographic_risk_factors = {
+        'gauteng': 1.0,      # Economic hub, lower risk
+        'western_cape': 0.9,  # Stable, lower risk
+        'kwazulu_natal': 1.1, # Moderate risk
+        'eastern_cape': 1.2,  # Higher risk
+        'limpopo': 1.3,       # Higher risk
+        'mpumalanga': 1.1,    # Moderate risk
+        'north_west': 1.2,    # Higher risk
+        'free_state': 1.1,    # Moderate risk
+        'northern_cape': 1.2  # Higher risk
+    }
+    # Simulate geographic distribution based on company ID
+    regions = list(geographic_risk_factors.keys())
+    company_region = regions[hash(company_id) % len(regions)]
+    geographic_risk = geographic_risk_factors[company_region]
+    
+    # 4. Business Model Risk
+    credit_type = company_profile.get('credit_type', 'Trade Receivables')
+    business_model_risk_factors = {
+        'Trade Receivables': 1.0,    # Standard
+        'Supply Chain Finance': 1.1,  # Higher risk
+        'Working Capital': 1.2,       # Higher risk
+        'Equipment Finance': 1.3,     # Higher risk
+        'Real Estate': 1.4,           # Highest risk
+        'Invoice Discounting': 0.9    # Lower risk
+    }
+    business_model_risk = business_model_risk_factors.get(credit_type, 1.0)
+    
+    # 5. Financial Health Risk (based on credit rating)
+    credit_rating = company_profile.get('credit_rating', 'BBB')
+    financial_health_factors = {
+        'AAA': 0.7, 'AA+': 0.75, 'AA': 0.8, 'AA-': 0.85,
+        'A+': 0.9, 'A': 0.95, 'A-': 1.0,
+        'BBB+': 1.05, 'BBB': 1.1, 'BBB-': 1.15,
+        'BB+': 1.3, 'BB': 1.4, 'BB-': 1.5,
+        'B+': 1.7, 'B': 1.9, 'B-': 2.1
+    }
+    financial_health_risk = financial_health_factors.get(credit_rating, 1.1)
+    
+    # 6. Management Risk (simulated based on company performance)
+    # Companies with better performance have lower management risk
+    avg_pd = company_profile.get('avg_pd', 0.06)
+    if avg_pd < 0.04:
+        management_risk = 0.8  # Excellent management
+    elif avg_pd < 0.06:
+        management_risk = 0.9  # Good management
+    elif avg_pd < 0.08:
+        management_risk = 1.0  # Average management
+    elif avg_pd < 0.10:
+        management_risk = 1.1  # Poor management
+    else:
+        management_risk = 1.3  # Very poor management
+    
+    # 7. Concentration Risk (exposure relative to portfolio)
+    portfolio_total = company_data['total_exposure'].sum()
+    concentration_ratio = total_exposure / portfolio_total if portfolio_total > 0 else 0
+    
+    if concentration_ratio > 0.15:
+        concentration_risk = 1.4  # High concentration
+    elif concentration_ratio > 0.10:
+        concentration_risk = 1.2  # Moderate concentration
+    elif concentration_ratio > 0.05:
+        concentration_risk = 1.1  # Low concentration
+    else:
+        concentration_risk = 1.0  # Well diversified
+    
+    return {
+        'industry_risk': industry_risk,
+        'size_risk': size_risk,
+        'geographic_risk': geographic_risk,
+        'business_model_risk': business_model_risk,
+        'financial_health_risk': financial_health_risk,
+        'management_risk': management_risk,
+        'concentration_risk': concentration_risk
+    }
+
+def calculate_company_pd_from_transactions(company_id, transactions, company_df):
+    """Calculate real-time company PD from transaction data with company-specific risk factors"""
+    
+    # Filter transactions for this company
+    company_transactions = [tx for tx in transactions if tx['company_id'] == company_id]
+    
+    if not company_transactions:
+        return 0.06  # Default PD if no transactions
+    
+    # Calculate base weighted average PD from transactions
+    total_exposure = sum(tx['amount'] for tx in company_transactions)
+    base_weighted_pd = sum(tx['pd'] * tx['amount'] for tx in company_transactions) / total_exposure
+    
+    # Get company-specific risk factors
+    company_risk_factors = calculate_company_specific_risk(company_id, company_df, transactions)
+    
+    # Calculate comprehensive risk multiplier
+    total_risk_multiplier = (
+        company_risk_factors['industry_risk'] *
+        company_risk_factors['size_risk'] *
+        company_risk_factors['geographic_risk'] *
+        company_risk_factors['business_model_risk'] *
+        company_risk_factors['financial_health_risk'] *
+        company_risk_factors['management_risk'] *
+        company_risk_factors['concentration_risk']
+    )
+    
+    # Apply company-specific risk adjustment
+    company_specific_pd = base_weighted_pd * total_risk_multiplier
+    
+    # Add market stress adjustment (now more sophisticated)
+    # Get current market stress from CDS data if available
+    market_stress_multiplier = 1.0
+    if hasattr(st.session_state, 'cds_data') and st.session_state.cds_data:
+        cds_data = st.session_state.cds_data
+        south_africa_cds = cds_data.get('south_africa_cds', 180)
+        # Market stress based on CDS deviation from baseline
+        cds_stress = (south_africa_cds - 180) / 180  # -1 to +1 range
+        market_stress_multiplier = 1.0 + (cds_stress * 0.2)  # ±20% market stress effect
+    
+    # Final PD calculation with all risk factors
+    final_pd = company_specific_pd * market_stress_multiplier
+    
+    return min(0.25, max(0.01, final_pd))  # Bound between 1%-25%
+
+def update_company_metrics_from_transactions(company_df, transactions):
+    """Update company metrics in real-time from transaction data"""
+    
+    # Group transactions by company
+    company_transactions = {}
+    for tx in transactions:
+        if tx['company_id'] not in company_transactions:
+            company_transactions[tx['company_id']] = []
+        company_transactions[tx['company_id']].append(tx)
+    
+    # Update each company's metrics
+    for company_id, tx_list in company_transactions.items():
+        if company_id in company_df['company'].values:
+            # Find company index
+            company_idx = company_df[company_df['company'] == company_id].index[0]
+            
+            # Calculate real-time metrics
+            total_exposure = sum(tx['amount'] for tx in tx_list)
+            avg_pd = calculate_company_pd_from_transactions(company_id, tx_list, company_df)
+            avg_tenor = sum(tx['tenor_days'] for tx in tx_list) / len(tx_list)
+            
+            # Update company data
+            company_df.loc[company_idx, 'total_exposure'] = total_exposure
+            company_df.loc[company_idx, 'avg_pd'] = avg_pd
+            company_df.loc[company_idx, 'terms_tenor'] = avg_tenor
+            
+            # Update yield based on PD (higher PD = higher yield)
+            new_yield = 30.0 + (avg_pd * 100)  # Base 30% + PD adjustment
+            company_df.loc[company_idx, 'yield'] = new_yield
+            
+            # Update spread based on PD
+            new_spread = int(30 + (avg_pd * 200))  # Base 30bps + PD adjustment
+            company_df.loc[company_idx, 'spread_bps'] = new_spread
+            
+            # Update credit rating based on PD
+            if avg_pd < 0.03:
+                new_rating = 'A-'
+            elif avg_pd < 0.05:
+                new_rating = 'BBB+'
+            elif avg_pd < 0.08:
+                new_rating = 'BBB'
+            elif avg_pd < 0.12:
+                new_rating = 'BBB-'
+            else:
+                new_rating = 'BB+'
+            
+            company_df.loc[company_idx, 'credit_rating'] = new_rating
+            
+            # Update 24h change metrics - this is the key fix!
+            notional_change = sum(tx['amount'] for tx in tx_list)
+            cds_fee_change = sum(tx['amount'] * tx['pd'] for tx in tx_list)
+            
+            company_df.loc[company_idx, 'notional_24h_change'] = notional_change
+            company_df.loc[company_idx, 'cds_fee_24h_change'] = cds_fee_change
+    
+    return company_df
 
 # ============================================================================
 # EXPORT FUNCTIONS
@@ -61,9 +597,10 @@ def generate_excel_report():
         # Cash Flow Waterfall
         waterfall_df.to_excel(writer, sheet_name='Cash_Flow_Waterfall', index=False)
         
-        # Summary Sheet
+        # BRICS Protocol Summary Sheet
         summary_data = {
             'Metric': [
+                'BRICS Protocol Report',
                 'Current $BRICS Price',
                 'Target APY',
                 'Total Portfolio Exposure',
@@ -71,9 +608,11 @@ def generate_excel_report():
                 'Capital Efficiency',
                 'Number of Obligors',
                 'Average Yield',
-                'Report Generated'
+                'Report Generated',
+                'Contact Information'
             ],
             'Value': [
+                BRICS_BRAND['name'],
                 f"${protocol_df[protocol_df['metric'] == 'brics_price']['value'].iloc[0]:.3f}",
                 f"{protocol_df[protocol_df['metric'] == 'apy_per_brics']['value'].iloc[0]:.1f}%",
                 f"${company_df['total_exposure'].sum():,.0f}",
@@ -81,21 +620,34 @@ def generate_excel_report():
                 f"{protocol_df[protocol_df['metric'] == 'capital_efficiency']['value'].iloc[0]:.1f}x",
                 len(company_df),
                 f"{company_df['yield'].mean():.1f}%",
-                datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                BRICS_BRAND['contact']['email']
             ]
         }
-        pd.DataFrame(summary_data).to_excel(writer, sheet_name='Executive_Summary', index=False)
+        pd.DataFrame(summary_data).to_excel(writer, sheet_name='BRICS_Executive_Summary', index=False)
     
     return output.getvalue()
 
 def generate_pdf_report():
-    """Generate professional PDF report for due diligence"""
+    """Generate professional BRICS Protocol PDF report for due diligence"""
     pdf = FPDF()
     pdf.add_page()
     
-    # Title
-    pdf.set_font('Arial', 'B', 20)
-    pdf.cell(0, 20, 'BRICS Protocol Investment Report', ln=True, align='C')
+    # BRICS Protocol Header
+    pdf.set_font('Arial', 'B', 24)
+    pdf.set_text_color(30, 60, 114)  # BRICS primary blue
+    pdf.cell(0, 20, BRICS_BRAND['name'], ln=True, align='C')
+    
+    pdf.set_font('Arial', '', 12)
+    pdf.set_text_color(102, 126, 234)  # BRICS secondary blue
+    pdf.cell(0, 10, BRICS_BRAND['tagline'], ln=True, align='C')
+    pdf.ln(5)
+    
+    # Report metadata
+    pdf.set_font('Arial', '', 10)
+    pdf.set_text_color(102, 102, 102)  # Gray
+    pdf.cell(0, 8, f"Report Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", ln=True, align='C')
+    pdf.cell(0, 8, f"Contact: {BRICS_BRAND['contact']['email']}", ln=True, align='C')
     pdf.ln(10)
     
     # Executive Summary
@@ -309,64 +861,169 @@ def show_success_state(message="Operation completed successfully!"):
     </div>
     """, unsafe_allow_html=True)
 
+def create_branded_header():
+    """Create BRICS Protocol branded header"""
+    # Create the header HTML with proper escaping
+    header_html = f"""
+    <div class="brics-header">
+        <div class="brics-logo">
+            {BRICS_LOGO_HTML}
+        </div>
+        <h1 class="brics-title">{BRICS_BRAND['name']}</h1>
+        <p class="brics-tagline">{BRICS_BRAND['tagline']}</p>
+        <div style="margin-top: 1rem;">
+            <a href="mailto:{BRICS_BRAND['contact']['email']}" class="brics-cta">📧 Contact Founders</a>
+            <a href="{BRICS_BRAND['contact']['website']}" class="brics-cta" target="_blank">🌐 Visit Website</a>
+        </div>
+    </div>
+    """
+    
+    html(header_html, height=200)
+
+def create_contact_footer():
+    """Create BRICS Protocol contact footer"""
+    footer_html = f"""
+    <div style="background: rgba(255,255,255,0.95); padding: 2rem; border-radius: 1rem; margin-top: 2rem; box-shadow: 0 4px 20px rgba(0,0,0,0.08);">
+        <div style="text-align: center; margin-bottom: 1rem;">
+            <h4 style="margin: 0; color: {BRICS_COLORS['primary']}; font-weight: 600; font-family: {BRICS_FONTS['heading']};">📋 Important Disclaimers</h4>
+        </div>
+        <p style="margin: 0; color: {BRICS_COLORS['neutral']}; line-height: 1.6; font-family: {BRICS_FONTS['body']};">
+            <strong>Disclaimer:</strong> This report is for informational purposes only. Past performance does not guarantee future results. 
+            $BRICS involves credit risk and is not suitable for all investors. Please consult with your financial advisor before making any investment decisions.
+        </p>
+        <hr style="margin: 1rem 0; border: none; border-top: 1px solid #eee;">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
+            <div style="flex: 1; min-width: 300px;">
+                <p style="margin: 0; color: {BRICS_COLORS['neutral']}; font-size: 0.9rem; font-family: {BRICS_FONTS['body']};">
+                    © 2024 {BRICS_BRAND['name']} • {BRICS_BRAND['tagline']} • Built for Investor Due Diligence
+                </p>
+            </div>
+            <div style="flex: 1; min-width: 300px; text-align: right;">
+                <p style="margin: 0; color: {BRICS_COLORS['neutral']}; font-size: 0.9rem; font-family: {BRICS_FONTS['body']};">
+                    📧 {BRICS_BRAND['contact']['email']} • 🌐 {BRICS_BRAND['contact']['website']}
+                </p>
+            </div>
+        </div>
+    </div>
+    """
+    
+    html(footer_html, height=150)
+
 st.set_page_config(
     page_title="$BRICS Investment Report", 
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-# Custom CSS for professional styling with grid system
-st.markdown("""
+# Custom CSS for BRICS Protocol branding
+st.markdown(f"""
 <style>
+    /* Import Google Fonts */
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap');
+    
     /* Global Styles */
-    .main {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    .main {{
+        background: linear-gradient(135deg, {BRICS_COLORS['gradient_start']} 0%, {BRICS_COLORS['gradient_end']} 100%);
         padding: 0;
-    }
+        font-family: {BRICS_FONTS['body']};
+    }}
+    
+    /* BRICS Protocol Branding */
+    .brics-header {{
+        background: linear-gradient(135deg, {BRICS_COLORS['primary']} 0%, {BRICS_COLORS['secondary']} 100%);
+        color: {BRICS_COLORS['white']};
+        padding: 2rem;
+        border-radius: 1rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        border: 1px solid rgba(255,255,255,0.1);
+        text-align: center;
+    }}
+    
+    .brics-logo {{
+        display: inline-block;
+        margin-bottom: 1rem;
+    }}
+    
+    .brics-title {{
+        font-family: {BRICS_FONTS['heading']};
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin: 0;
+        color: {BRICS_COLORS['white']};
+    }}
+    
+    .brics-tagline {{
+        font-family: {BRICS_FONTS['body']};
+        font-size: 1.1rem;
+        opacity: 0.9;
+        margin: 0.5rem 0;
+        color: {BRICS_COLORS['white']};
+    }}
+    
+    .brics-cta {{
+        background: {BRICS_COLORS['accent']};
+        color: {BRICS_COLORS['white']};
+        padding: 0.75rem 1.5rem;
+        border-radius: 0.5rem;
+        text-decoration: none;
+        font-weight: 600;
+        display: inline-block;
+        margin: 1rem 0.5rem;
+        transition: all 0.3s ease;
+    }}
+    
+    .brics-cta:hover {{
+        background: {BRICS_COLORS['primary']};
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    }}
     
     /* Grid System */
-    .grid-container {
+    .grid-container {{
         display: grid;
         gap: 1.5rem;
         margin: 1rem 0;
-    }
+    }}
     
-    .grid-2x2 {
+    .grid-2x2 {{
         grid-template-columns: 1fr 1fr;
         grid-template-rows: 1fr 1fr;
-    }
+    }}
     
-    .grid-3x3 {
+    .grid-3x3 {{
         grid-template-columns: 1fr 1fr 1fr;
         grid-template-rows: 1fr 1fr 1fr;
-    }
+    }}
     
-    .grid-2x3 {
+    .grid-2x3 {{
         grid-template-columns: 1fr 1fr;
         grid-template-rows: 1fr 1fr 1fr;
-    }
+    }}
     
     /* Section Cards */
-    .section-card {
+    .section-card {{
         background: rgba(255,255,255,0.95);
         padding: 1.5rem;
         border-radius: 1rem;
         border: 1px solid rgba(0,0,0,0.1);
         box-shadow: 0 4px 20px rgba(0,0,0,0.08);
         margin-bottom: 1.5rem;
-    }
+    }}
     
-    .section-header {
+    .section-header {{
         font-size: 1.4rem;
         font-weight: 600;
-        color: #1e3c72;
+        color: {BRICS_COLORS['primary']};
         margin-bottom: 1rem;
         padding-bottom: 0.5rem;
-        border-bottom: 2px solid #667eea;
-    }
+        border-bottom: 2px solid {BRICS_COLORS['secondary']};
+        font-family: {BRICS_FONTS['heading']};
+    }}
     
     /* Metric Cards */
-    .metric-card {
+    .metric-card {{
         background: rgba(255,255,255,0.95);
         padding: 1.5rem;
         border-radius: 1rem;
@@ -374,15 +1031,15 @@ st.markdown("""
         margin: 1rem 0;
         box-shadow: 0 4px 20px rgba(0,0,0,0.08);
         transition: transform 0.2s ease;
-    }
+    }}
     
-    .metric-card:hover {
+    .metric-card:hover {{
         transform: translateY(-2px);
         box-shadow: 0 8px 25px rgba(0,0,0,0.12);
-    }
+    }}
     
     /* Header Styling */
-    .main-header {
+    .main-header {{
         background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
         color: white;
         padding: 2rem;
@@ -390,69 +1047,69 @@ st.markdown("""
         margin-bottom: 2rem;
         box-shadow: 0 8px 32px rgba(0,0,0,0.1);
         border: 1px solid rgba(255,255,255,0.1);
-    }
+    }}
     
     /* Status Indicators */
-    .status-indicator {
+    .status-indicator {{
         font-size: 1.3rem;
         font-weight: bold;
         padding: 0.5rem 1rem;
         border-radius: 2rem;
         display: inline-block;
-    }
+    }}
     
-    .status-stable {
+    .status-stable {{
         background: linear-gradient(135deg, #56ab2f 0%, #a8e6cf 100%);
         color: white;
-    }
+    }}
     
-    .status-volatile {
+    .status-volatile {{
         background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
         color: white;
-    }
+    }}
     
-    .status-stress {
+    .status-stress {{
         background: linear-gradient(135deg, #ff416c 0%, #ff4b2b 100%);
         color: white;
-    }
+    }}
     
     /* Live Indicator */
-    .live-indicator {
+    .live-indicator {{
         animation: pulse 2s infinite;
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         color: white;
         padding: 0.5rem 1rem;
         border-radius: 2rem;
         font-weight: bold;
-    }
+    }}
     
-    @keyframes pulse {
-        0% { opacity: 1; transform: scale(1); }
-        50% { opacity: 0.8; transform: scale(1.05); }
-        100% { opacity: 1; transform: scale(1); }
-    }
+    @keyframes pulse {{
+        0%% {{ opacity: 1; transform: scale(1); }}
+        50%% {{ opacity: 0.8; transform: scale(1.05); }}
+        100%% {{ opacity: 1; transform: scale(1); }}
+    }}
     
     /* Tab Styling */
-    .stTabs [data-baseweb="tab-list"] {
+    .stTabs [data-baseweb="tab-list"] {{
         gap: 8px;
-    }
+    }}
     
-    .stTabs [data-baseweb="tab"] {
+    .stTabs [data-baseweb="tab"] {{
         background: rgba(255,255,255,0.9);
         border-radius: 0.5rem 0.5rem 0 0;
         padding: 1rem 1.5rem;
         font-weight: 600;
         transition: all 0.3s ease;
-    }
+    }}
     
-    .stTabs [aria-selected="true"] {
+    .stTabs [aria-selected="true"] {{
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         color: white;
         box-shadow: 0 4px 15px rgba(102,126,234,0.4);
-    }
+    }}
     
     /* Section Headers */
-    .section-header {
+    .section-header {{
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         color: white;
         padding: 1rem 1.5rem;
@@ -460,29 +1117,29 @@ st.markdown("""
         margin: 1.5rem 0 1rem 0;
         font-weight: 600;
         box-shadow: 0 4px 15px rgba(102,126,234,0.2);
-    }
+    }}
     
     /* Info Boxes */
-    .info-box {
+    .info-box {{
         background: rgba(255,255,255,0.95);
         padding: 1.5rem;
         border-radius: 1rem;
         border-left: 6px solid #667eea;
         margin: 1rem 0;
         box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-    }
+    }}
     
     /* Chart Containers */
-    .chart-container {
+    .chart-container {{
         background: rgba(255,255,255,0.95);
         padding: 1.5rem;
         border-radius: 1rem;
         margin: 1rem 0;
         box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-    }
+    }}
     
     /* Button Styling */
-    .stButton > button {
+    .stButton > button {{
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         color: white;
         border: none;
@@ -491,99 +1148,88 @@ st.markdown("""
         font-weight: 600;
         transition: all 0.3s ease;
         box-shadow: 0 4px 15px rgba(102,126,234,0.3);
-    }
+    }}
     
-    .stButton > button:hover {
+    .stButton > button:hover {{
         transform: translateY(-2px);
         box-shadow: 0 8px 25px rgba(102,126,234,0.4);
-    }
+    }}
     
     /* Metric Styling */
-    .metric-value {
+    .metric-value {{
         font-size: 2rem;
         font-weight: bold;
         color: #1e3c72;
-    }
+    }}
     
-    .metric-label {
+    .metric-label {{
         font-size: 0.9rem;
         color: #666;
         text-transform: uppercase;
         letter-spacing: 0.5px;
-    }
-    
-    /* Responsive Design */
-    @media (max-width: 768px) {
-        .metric-card {
-            padding: 1rem;
-        }
-        
-        .main-header {
-            padding: 1.5rem;
-        }
-    }
+    }}
     
     /* Custom Scrollbar */
-    ::-webkit-scrollbar {
+    ::-webkit-scrollbar {{
         width: 8px;
-    }
+    }}
     
-    ::-webkit-scrollbar-track {
+    ::-webkit-scrollbar-track {{
         background: #f1f1f1;
         border-radius: 4px;
-    }
+    }}
     
-    ::-webkit-scrollbar-thumb {
+    ::-webkit-scrollbar-thumb {{
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         border-radius: 4px;
-    }
+    }}
     
-    ::-webkit-scrollbar-thumb:hover {
+    ::-webkit-scrollbar-thumb:hover {{
         background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
-    }
+    }}
     
     /* Mobile Responsiveness */
-    @media (max-width: 768px) {
-        .main-header {
+    @media (max-width: 768px) {{
+        .main-header {{
             padding: 1rem;
             margin-bottom: 1rem;
-        }
+        }}
         
-        .section-card {
+        .section-card {{
             padding: 1rem;
             margin-bottom: 1rem;
-        }
+        }}
         
-        .section-header {
+        .section-header {{
             font-size: 1.2rem;
-        }
+        }}
         
-        .metric-card {
+        .metric-card {{
             padding: 1rem;
             margin: 0.5rem 0;
-        }
+        }}
         
         /* Stack columns on mobile */
-        .stColumns > div {
+        .stColumns > div {{
             width: 100% !important;
             margin-bottom: 1rem;
-        }
+        }}
         
         /* Adjust chart containers */
-        .chart-container {
+        .chart-container {{
             padding: 0.5rem;
-        }
+        }}
         
         /* Make buttons more touch-friendly */
-        .stButton > button {
+        .stButton > button {{
             width: 100%;
             height: 3rem;
             font-size: 1rem;
-        }
-    }
+        }}
+    }}
     
     /* Loading States */
-    .loading-container {
+    .loading-container {{
         display: flex;
         justify-content: center;
         align-items: center;
@@ -591,30 +1237,30 @@ st.markdown("""
         background: rgba(255,255,255,0.9);
         border-radius: 1rem;
         margin: 1rem 0;
-    }
+    }}
     
     /* Error States */
-    .error-container {
+    .error-container {{
         background: rgba(255,0,0,0.1);
         border: 1px solid #ff0000;
         border-radius: 0.5rem;
         padding: 1rem;
         margin: 1rem 0;
-    }
+    }}
     
     /* Success States */
-    .success-container {
+    .success-container {{
         background: rgba(0,255,0,0.1);
         border: 1px solid #00ff00;
         border-radius: 0.5rem;
         padding: 1rem;
         margin: 1rem 0;
-    }
+    }}
 </style>
 """, unsafe_allow_html=True)
 
-# Load all data
-company_df = pd.read_csv("data/mock_company_summary.csv")
+# Load static data (fallback)
+static_company_df = pd.read_csv("data/mock_company_summary.csv")
 protocol_df = pd.read_csv("data/mock_protocol_metrics.csv")
 risk_df = pd.read_csv("data/mock_risk_outputs.csv")
 waterfall_df = pd.read_csv("data/mock_waterfall.csv")
@@ -622,6 +1268,9 @@ portfolio_tranching_df = pd.read_csv("data/mock_portfolio_tranching.csv")
 transactions_df = pd.read_csv("data/mock_transactions.csv")
 brics_price_df = pd.read_csv("data/mock_brics_price.csv")
 transactions_extended_df = pd.read_csv("data/mock_transactions_extended.csv")
+
+# Initialize company_df as None - will be set by run_all_simulations()
+company_df = None
 
 # Initialize session state
 if 'selected_company' not in st.session_state:
@@ -636,6 +1285,8 @@ if 'fast_last_update' not in st.session_state:
     st.session_state.fast_last_update = datetime.now()
 if 'normal_last_update' not in st.session_state:
     st.session_state.normal_last_update = datetime.now()
+
+# Initialize dynamic company data (will be called after function definition)
 
 # Tiered real-time data simulation
 def simulate_ultra_fast_data():
@@ -830,23 +1481,141 @@ def simulate_normal_data():
 
 # Run all simulation tiers
 def run_all_simulations():
-    simulate_ultra_fast_data()
-    simulate_fast_data()
-    simulate_normal_data()
+    # Fetch real public data including CDS spreads
+    real_data = fetch_real_public_data()
+    cds_data = fetch_live_cds_data()
+    
+    # Merge CDS data into real_data
+    real_data.update(cds_data)
+    
+    # Calculate realistic $BRICS price using real data + CDS spreads
+    realistic_brics_price = calculate_realistic_brics_price(real_data)
+    
+    # Update protocol metrics with real data
+    global protocol_df
+    protocol_df.loc[protocol_df['metric'] == 'brics_price', 'value'] = realistic_brics_price
+    
+    # Simulate live transaction data
+    live_transactions = simulate_live_transaction_data()
+    
+    # Initialize company data if not exists or is None
+    global company_df
+    if company_df is None:
+        
+        # Create 100 diverse companies
+        companies = []
+        industries = [
+            'mining', 'manufacturing', 'financial', 'retail', 'agriculture',
+            'energy', 'technology', 'telecommunications', 'beverages', 'automotive',
+            'construction', 'healthcare', 'education', 'logistics', 'real_estate'
+        ]
+        
+        credit_ratings = ['AAA', 'AA+', 'AA', 'AA-', 'A+', 'A', 'A-', 'BBB+', 'BBB', 'BBB-', 'BB+', 'BB', 'BB-']
+        credit_types = ['Trade Receivables', 'Supply Chain Finance', 'Working Capital', 'Equipment Finance', 'Invoice Discounting']
+        banks = ['First National Bank', 'Standard Bank', 'Nedbank', 'ABSA Bank', 'Old Mutual', 'Investec', 'Capitec', 'African Bank']
+        
+        for i in range(1, 101):
+            # Curated portfolio distribution: Focus on larger, more active obligors
+            # In private placement, we select obligors for their activity and credit quality
+            if i <= 30:
+                # Top tier: Large, active companies (30% of portfolio)
+                size_category = 'large'
+            elif i <= 60:
+                # Second tier: Medium companies (30% of portfolio)
+                size_category = 'medium'
+            elif i <= 85:
+                # Third tier: Smaller but active companies (25% of portfolio)
+                size_category = 'small'
+            else:
+                # Fourth tier: Specialized companies (15% of portfolio)
+                size_category = 'small'  # Even specialized companies are active
+            
+            if size_category == 'large':
+                exposure = random.randint(5000000, 20000000)
+                base_pd = random.uniform(0.02, 0.05)
+            elif size_category == 'medium':
+                exposure = random.randint(2000000, 5000000)
+                base_pd = random.uniform(0.04, 0.08)
+            elif size_category == 'small':
+                exposure = random.randint(500000, 2000000)
+                base_pd = random.uniform(0.06, 0.12)
+            else:  # very_small
+                exposure = random.randint(100000, 500000)
+                base_pd = random.uniform(0.10, 0.20)
+            
+            # Credit rating based on PD
+            if base_pd < 0.03:
+                rating = random.choice(['AAA', 'AA+', 'AA'])
+            elif base_pd < 0.05:
+                rating = random.choice(['AA-', 'A+', 'A'])
+            elif base_pd < 0.08:
+                rating = random.choice(['A-', 'BBB+', 'BBB'])
+            elif base_pd < 0.12:
+                rating = random.choice(['BBB-', 'BB+', 'BB'])
+            else:
+                rating = random.choice(['BB-', 'B+', 'B'])
+            
+            # Yield based on PD and rating
+            base_yield = 25.0 + (base_pd * 150)  # Higher PD = higher yield
+            yield_adjustment = random.uniform(-5, 5)
+            yield_rate = base_yield + yield_adjustment
+            
+            # Spread based on rating
+            spread_base = {'AAA': 15, 'AA+': 18, 'AA': 20, 'AA-': 22, 'A+': 25, 'A': 28, 'A-': 30,
+                          'BBB+': 35, 'BBB': 38, 'BBB-': 42, 'BB+': 50, 'BB': 60, 'BB-': 75}
+            spread = spread_base.get(rating, 40) + random.randint(-5, 5)
+            
+            company = {
+                'company': f"COMP_{i}",
+                'industry': random.choice(industries),
+                'credit_rating': rating,
+                'avg_pd': base_pd,
+                'yield': yield_rate,
+                'total_exposure': exposure,
+                'terms_tenor': random.randint(30, 180),
+                'spread_bps': spread,
+                'status': random.choice(['On track', 'Watch', 'Under review', 'Stable']),
+                'credit_type': random.choice(credit_types),
+                'underwriting_bank': random.choice(banks),
+                'time_listed': random.choice(['1mo ago', '2mo ago', '3mo ago', '6mo ago', '1yr ago']),
+                'notional_24h_change': 0,
+                'cds_fee_24h_change': 0.0
+            }
+            companies.append(company)
+        
+        company_df = pd.DataFrame(companies)
+    
+    # Update company metrics from live transaction data
+    company_df = update_company_metrics_from_transactions(company_df, live_transactions)
+    
+    # Store live transaction data in session state
+    st.session_state.live_transactions = live_transactions
+    st.session_state.real_data = real_data
+    st.session_state.cds_data = cds_data
+    st.session_state.last_real_data_update = datetime.now()
 
-# Run simulations
+# Initialize dynamic company data after function definition
 run_all_simulations()
+
+# ============================================================================
+# MAIN APPLICATION
+# ============================================================================
 
 # ============================================================================
 # SIDEBAR NAVIGATION
 # ============================================================================
 with st.sidebar:
-    st.markdown("""
-    <div style="padding: 1rem 0;">
-        <h3 style="margin: 0; color: #1e3c72; font-weight: 600;">📊 BRICS Protocol</h3>
-        <p style="margin: 0.5rem 0; font-size: 0.9rem; color: #666;">Investment Analytics & Monitoring</p>
+    sidebar_html = f"""
+    <div style="padding: 1rem 0; text-align: center;">
+        <div style="margin-bottom: 1rem;">
+            {BRICS_LOGO_HTML}
+        </div>
+        <h3 style="margin: 0; color: {BRICS_COLORS['primary']}; font-weight: 600; font-family: {BRICS_FONTS['heading']};">{BRICS_BRAND['name']}</h3>
+        <p style="margin: 0.5rem 0; font-size: 0.9rem; color: {BRICS_COLORS['neutral']}; font-family: {BRICS_FONTS['body']};">{BRICS_BRAND['tagline']}</p>
     </div>
-    """, unsafe_allow_html=True)
+    """
+    
+    html(sidebar_html, height=120)
     
     # Navigation menu
     page = st.selectbox(
@@ -868,19 +1637,10 @@ with st.sidebar:
     
     st.divider()
     
-    # Quick metrics
-    st.markdown("**Quick Metrics:**")
-    current_price = protocol_df[protocol_df['metric'] == 'brics_price']['value'].iloc[0]
-    st.metric("$BRICS Price", f"${current_price:.3f}")
-    
-    apy = protocol_df[protocol_df['metric'] == 'apy_per_brics']['value'].iloc[0]
-    st.metric("Target APY", f"{apy:.1f}%")
-    
-    total_exposure = company_df['total_exposure'].sum()
-    st.metric("Total Exposure", f"${total_exposure:,.0f}")
-    
-    weighted_pd = protocol_df[protocol_df['metric'] == 'weighted_pd']['value'].iloc[0]
-    st.metric("Portfolio PD", f"{weighted_pd*100:.1f}%")
+    # Essential protocol status only
+    st.markdown("**Protocol Status:**")
+    st.metric("$BRICS Price", f"${protocol_df[protocol_df['metric'] == 'brics_price']['value'].iloc[0]:.3f}")
+    st.metric("Sovereign Rating", "BBB- (Stable)")
 
 # ============================================================================
 # PAGE NAVIGATION
@@ -889,16 +1649,7 @@ if page == "Dashboard":
     # ============================================================================
     # DASHBOARD - PROMINENT CURRENT PRICE
     # ============================================================================
-    st.markdown("""
-    <div class="main-header">
-        <h1 style="margin: 0; font-size: 2.5rem; font-weight: 700; text-align: center;">
-            💰 $BRICS Investment Report
-        </h1>
-        <p style="text-align: center; margin: 0.5rem 0 0 0; opacity: 0.9; font-size: 1.1rem;">
-            AI-Native Synthetic Credit Protocol • Real-Time Risk Analytics • Investor Due Diligence
-        </p>
-    </div>
-    """, unsafe_allow_html=True)
+    create_branded_header()
     
     # PROMINENT CURRENT PRICE - FIRST THING USERS SEE
     current_price = protocol_df[protocol_df['metric'] == 'brics_price']['value'].iloc[0]
@@ -912,14 +1663,171 @@ if page == "Dashboard":
     <div style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); 
                 color: white; padding: 2rem; border-radius: 1rem; margin: 1rem 0; 
                 text-align: center; box-shadow: 0 8px 32px rgba(0,0,0,0.1);">
-        <h2 style="margin: 0; font-size: 1.2rem; opacity: 0.9;">Current $BRICS Price</h2>
+        <h2 style="margin: 0; font-size: 1.2rem; opacity: 0.9;">Sovereign-Backed $BRICS</h2>
         <h1 style="margin: 0.5rem 0; font-size: 3.5rem; font-weight: 700;">${current_price:.3f}</h1>
         <p style="margin: 0; font-size: 1.1rem; opacity: 0.9;">
-            {price_change_pct:+.2f}% from $1.00 peg • {live_status}
+            Super Senior Tranche • CDS Premium Yield • {live_status}
+        </p>
+        <p style="margin: 0.5rem 0; font-size: 0.9rem; opacity: 0.8;">
+            South African Treasury Backed • FAIS FSP #52815 • Basel III SRT Compliant
         </p>
     </div>
     """, unsafe_allow_html=True)
 
+    # Protocol Structure Overview
+    st.markdown("### 📊 Protocol Structure & Metrics")
+    
+    col1, col2, col3, col4 = st.columns(4)
+    
+    with col1:
+        st.metric("Super Senior Tranche", "85% Attachment", "Safest exposure layer")
+        st.metric("First-Loss Coverage", "15% Bank Retained", "Bank absorbs initial losses")
+    
+    with col2:
+        st.metric("Reserve Account", "$2.5M Backed", "Sovereign guarantee")
+        st.metric("CDS Premium Yield", f"{protocol_df[protocol_df['metric'] == 'apy_per_brics']['value'].iloc[0]:.1f}%", "Synthetic credit yield")
+    
+    with col3:
+        st.metric("Receivables Pool", f"${company_df['total_exposure'].sum():,.0f}", "30-180 day tenor")
+        st.metric("AI-Modeled PD", f"{protocol_df[protocol_df['metric'] == 'weighted_pd']['value'].iloc[0]*100:.1f}%", "Credit default probability")
+    
+    with col4:
+        st.metric("Regulatory Status", "FAIS FSP #52815", "South African compliance")
+        st.metric("Basel III SRT", "Compliant", "Significant Risk Transfer")
+    
+    # Real Data Sources Status
+    if hasattr(st.session_state, 'real_data') and st.session_state.real_data:
+        st.markdown("### 🌐 Real Data Sources")
+        
+        col1, col2, col3, col4 = st.columns(4)
+        
+        with col1:
+            if 'zar_usd_rate' in st.session_state.real_data:
+                st.metric("ZAR/USD Rate", f"${st.session_state.real_data['zar_usd_rate']:.2f}", "Real FX Data")
+            else:
+                st.metric("ZAR/USD Rate", "$18.50", "Simulated")
+        
+        with col2:
+            if 'gas_fees' in st.session_state.real_data:
+                st.metric("Gas Fees", f"{st.session_state.real_data['gas_fees']} gwei", "Real Ethereum Data")
+            else:
+                st.metric("Gas Fees", "25 gwei", "Simulated")
+        
+        with col3:
+            if 'usdc_mcap' in st.session_state.real_data:
+                st.metric("USDC Market Cap", f"${st.session_state.real_data['usdc_mcap']/1e9:.1f}B", "Real CoinGecko Data")
+            else:
+                st.metric("USDC Market Cap", "$25.2B", "Simulated")
+        
+        with col4:
+            if hasattr(st.session_state, 'last_real_data_update'):
+                st.metric("Last Update", st.session_state.last_real_data_update.strftime('%H:%M:%S'), "Real Data Refresh")
+            else:
+                st.metric("Last Update", "N/A", "No Real Data")
+    
+    # Live CDS Data Section
+    if hasattr(st.session_state, 'cds_data') and st.session_state.cds_data:
+        st.markdown("### 📊 Live CDS Spreads")
+        
+        col1, col2, col3, col4 = st.columns(4)
+        
+        with col1:
+            sa_cds = st.session_state.cds_data.get('south_africa_cds', 180)
+            st.metric("South Africa CDS", f"{sa_cds}bp", 
+                     delta=f"{sa_cds-180:+d}bp" if sa_cds != 180 else "0bp")
+        
+        with col2:
+            em_cds = st.session_state.cds_data.get('emerging_market_cds', 250)
+            st.metric("EM CDS Spread", f"{em_cds}bp", 
+                     delta=f"{em_cds-250:+d}bp" if em_cds != 250 else "0bp")
+        
+        with col3:
+            zar_vol = st.session_state.cds_data.get('zar_volatility_adjustment', 0)
+            st.metric("ZAR Volatility", f"{zar_vol:.1f}bp", 
+                     delta=f"{zar_vol:+0.1f}bp" if zar_vol != 0 else "0bp")
+        
+        with col4:
+            cds_5y = st.session_state.cds_data.get('cds_5y', 200)
+            st.metric("5Y CDS Term", f"{cds_5y}bp")
+    
+    # Live Transaction Stream Section
+    if hasattr(st.session_state, 'live_transactions') and st.session_state.live_transactions:
+        st.markdown("### 💳 Live Transaction Stream")
+        
+        transactions = st.session_state.live_transactions
+        
+        # Display recent transactions
+        if transactions:
+            # Create transaction summary
+            tx_summary = []
+            for tx in transactions[:5]:  # Show last 5 transactions
+                tx_summary.append({
+                    'ID': tx['transaction_id'][-8:],  # Short ID
+                    'Type': tx['type'].replace('_', ' ').title(),
+                    'Amount': f"${tx['amount']:,.0f}",
+                    'PD': f"{tx['pd']*100:.1f}%",
+                    'Rating': tx['credit_rating'],
+                    'Company': tx['company_id']
+                })
+            
+            tx_df = pd.DataFrame(tx_summary)
+            st.dataframe(tx_df, use_container_width=True, hide_index=True)
+            
+            # Transaction metrics
+            col1, col2, col3, col4 = st.columns(4)
+            with col1:
+                avg_pd = sum(tx['pd'] for tx in transactions) / len(transactions)
+                st.metric("Avg Transaction PD", f"{avg_pd*100:.1f}%")
+            
+            with col2:
+                total_volume = sum(tx['amount'] for tx in transactions)
+                st.metric("Total Volume", f"${total_volume:,.0f}")
+            
+            with col3:
+                num_companies = len(set(tx['company_id'] for tx in transactions))
+                st.metric("Active Companies", num_companies)
+            
+            with col4:
+                # Calculate transaction diversity
+                unique_industries = len(set(tx['industry'] for tx in transactions))
+                st.metric("Industries Represented", unique_industries)
+            
+            # Company Risk Analysis
+            st.markdown("**Company Risk Analysis:**")
+            
+            # Calculate risk factors for each company
+            company_risk_analysis = []
+            for company_id in set(tx['company_id'] for tx in transactions):
+                if company_id in company_df['company'].values:
+                    risk_factors = calculate_company_specific_risk(company_id, company_df, transactions)
+                    total_risk = (
+                        risk_factors['industry_risk'] *
+                        risk_factors['size_risk'] *
+                        risk_factors['geographic_risk'] *
+                        risk_factors['business_model_risk'] *
+                        risk_factors['financial_health_risk'] *
+                        risk_factors['management_risk'] *
+                        risk_factors['concentration_risk']
+                    )
+                    
+                    company_risk_analysis.append({
+                        'Company': company_id,
+                        'Industry Risk': f"{risk_factors['industry_risk']:.2f}x",
+                        'Size Risk': f"{risk_factors['size_risk']:.2f}x",
+                        'Geographic Risk': f"{risk_factors['geographic_risk']:.2f}x",
+                        'Business Model Risk': f"{risk_factors['business_model_risk']:.2f}x",
+                        'Financial Health Risk': f"{risk_factors['financial_health_risk']:.2f}x",
+                        'Management Risk': f"{risk_factors['management_risk']:.2f}x",
+                        'Concentration Risk': f"{risk_factors['concentration_risk']:.2f}x",
+                        'Total Risk Multiplier': f"{total_risk:.2f}x"
+                    })
+            
+            if company_risk_analysis:
+                risk_df = pd.DataFrame(company_risk_analysis)
+                st.dataframe(risk_df, use_container_width=True, hide_index=True)
+    
+    st.divider()
+    
     # Status and controls row
     col1, col2, col3, col4 = st.columns([2, 1, 1, 1])
 
@@ -1022,6 +1930,25 @@ if page == "Dashboard":
     
     # Real-time alerts
     display_alerts()
+    
+    # Contact CTA Section
+    st.markdown(f"""
+    <div style="background: linear-gradient(135deg, {BRICS_COLORS['primary']} 0%, {BRICS_COLORS['secondary']} 100%); 
+                color: {BRICS_COLORS['white']}; padding: 2rem; border-radius: 1rem; margin: 2rem 0; 
+                text-align: center; box-shadow: 0 8px 32px rgba(0,0,0,0.1);">
+        <h3 style="margin: 0 0 1rem 0; font-family: {BRICS_FONTS['heading']}; font-size: 1.5rem;">
+            Ready to Invest in $BRICS?
+        </h3>
+        <p style="margin: 0 0 1.5rem 0; opacity: 0.9; font-family: {BRICS_FONTS['body']};">
+            Get in touch with our investor relations team for detailed due diligence materials and investment opportunities.
+        </p>
+        <div style="display: flex; justify-content: center; gap: 1rem; flex-wrap: wrap;">
+            <a href="mailto:{BRICS_BRAND['contact']['email']}" class="brics-cta">📧 Contact Founders</a>
+            <a href="{BRICS_BRAND['contact']['website']}" class="brics-cta" target="_blank">�� Visit Website</a>
+            <a href="{BRICS_BRAND['contact']['linkedin']}" class="brics-cta" target="_blank">💼 LinkedIn</a>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
 
     # ============================================================================
     # KEY METRICS SECTION
@@ -1487,6 +2414,14 @@ elif page == "Portfolio Analysis":
     </div>
     """, unsafe_allow_html=True)
     
+    # Use dynamic company data instead of static CSV
+    if company_df is not None and len(company_df) > 15:
+        # Use our dynamic 100-company system
+        dynamic_company_df = company_df  # This is our 100-company DataFrame
+    else:
+        # Fallback to static data
+        dynamic_company_df = static_company_df
+    
     # Grid Layout (2x2)
     col1, col2 = st.columns(2)
     
@@ -1498,9 +2433,9 @@ elif page == "Portfolio Analysis":
         """, unsafe_allow_html=True)
         
         # Portfolio Overview
-        total_exposure = company_df['total_exposure'].sum()
-        avg_pd = company_df['avg_pd'].mean()
-        avg_yield = company_df['yield'].mean()
+        total_exposure = dynamic_company_df['total_exposure'].sum()
+        avg_pd = dynamic_company_df['avg_pd'].mean()
+        avg_yield = dynamic_company_df['yield'].mean()
 
         col1_1, col1_2 = st.columns(2)
         with col1_1:
@@ -1508,7 +2443,7 @@ elif page == "Portfolio Analysis":
             st.metric("Average PD", f"{avg_pd*100:.1f}%")
         with col1_2:
             st.metric("Average Yield", f"{avg_yield:.1f}%")
-            st.metric("Number of Obligors", len(company_df))
+            st.metric("Number of Obligors", len(dynamic_company_df))
     
     with col2:
         st.markdown("""
@@ -1537,27 +2472,86 @@ elif page == "Portfolio Analysis":
         # Interactive obligor selection
         selected_company = st.selectbox(
             "Select an obligor for detailed analysis:",
-            options=["Portfolio Overview"] + list(company_df['company'].unique()),
+            options=["Portfolio Overview"] + list(dynamic_company_df['company'].unique()),
             index=0
         )
 
     if selected_company == "Portfolio Overview":
-        # Show all obligors
-        st.dataframe(company_df, use_container_width=True)
+        # Show all obligors (limit to first 20 for display)
+        display_df = dynamic_company_df.head(20)
+        st.dataframe(display_df, use_container_width=True)
+        
+        # Show summary stats for all 100 companies
+        st.markdown("**📊 Portfolio Summary (All 100 Companies):**")
+        col1, col2, col3, col4 = st.columns(4)
+        with col1:
+            st.metric("Total Companies", len(dynamic_company_df))
+        with col2:
+            st.metric("Industries Represented", len(dynamic_company_df['industry'].unique()))
+        with col3:
+            st.metric("Credit Rating Range", f"{dynamic_company_df['credit_rating'].min()} - {dynamic_company_df['credit_rating'].max()}")
+        with col4:
+            st.metric("Size Range", f"${dynamic_company_df['total_exposure'].min():,.0f} - ${dynamic_company_df['total_exposure'].max():,.0f}")
+        
+        # Transaction Activity Analysis
+        st.markdown("**🔄 Transaction Activity Analysis:**")
+        
+        # Count companies with recent activity
+        active_companies = len(dynamic_company_df[dynamic_company_df['notional_24h_change'] != 0])
+        inactive_companies = len(dynamic_company_df[dynamic_company_df['notional_24h_change'] == 0])
+        
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            st.metric("Active Companies (24h)", active_companies, f"{active_companies/len(dynamic_company_df)*100:.1f}%")
+        with col2:
+            st.metric("Inactive Companies (24h)", inactive_companies, f"{inactive_companies/len(dynamic_company_df)*100:.1f}%")
+        with col3:
+            # Show live transaction data if available
+            if hasattr(st.session_state, 'live_transactions') and st.session_state.live_transactions:
+                live_companies = len(set(tx['company_id'] for tx in st.session_state.live_transactions))
+                st.metric("Live Transaction Companies", live_companies)
+            else:
+                st.metric("Live Transaction Companies", "N/A")
+        
+        # Show companies with recent activity
+        if active_companies > 0:
+            st.markdown("**📈 Companies with Recent Activity:**")
+            active_df = dynamic_company_df[dynamic_company_df['notional_24h_change'] != 0][['company', 'industry', 'credit_rating', 'notional_24h_change', 'cds_fee_24h_change']]
+            st.dataframe(active_df, use_container_width=True)
+        else:
+            st.info("No companies have had transactions in the current update cycle. This is normal - not all companies are active every minute.")
+        
+        # Transaction Distribution Pattern
+        st.markdown("**📊 Private Placement Transaction Pattern:**")
+        st.markdown("""
+        **Curated Portfolio System:**
+        - **Per Update (3 seconds)**: 2-5 transactions (curated selection)
+        - **Per Minute**: ~20-30 companies get transactions
+        - **Per Hour**: ~80-90 companies get transactions  
+        - **Per Day**: ~95-100 companies get transactions
+        
+        **Why This Reflects Private Placement:**
+        - **Selective Obligor Choice**: We choose active, creditworthy companies
+        - **Weighted Selection**: Larger companies (COMP_1-30) are 3x more likely to be selected
+        - **Quality Focus**: Medium companies (COMP_31-60) are 2x more likely
+        - **Activity-Based**: All selected obligors should show regular transaction activity
+        """)
         
         # Portfolio visualizations
         col1, col2 = st.columns(2)
         
         with col1:
-            fig_pd = px.bar(company_df, x="company", y="avg_pd", 
-                            title="Probability of Default by Obligor", 
+            # Sample 20 companies for visualization to avoid overcrowding
+            sample_df = dynamic_company_df.sample(min(20, len(dynamic_company_df)))
+            fig_pd = px.bar(sample_df, x="company", y="avg_pd", 
+                            title="Probability of Default by Obligor (Sample)", 
                             labels={"avg_pd": "PD (%)"}, color="credit_rating")
             fig_pd.update_layout(yaxis_tickformat='.1%')
             st.plotly_chart(fig_pd, use_container_width=True, key="pd_by_obligor")
         
         with col2:
-            fig_yield = px.bar(company_df, x="company", y="yield", 
-                               title="Yield by Obligor", 
+            fig_yield = px.bar(sample_df, x="company", y="yield", 
+                               title="Yield by Obligor (Sample)", 
                                labels={"yield": "Yield (%)"}, color="industry")
             st.plotly_chart(fig_yield, use_container_width=True, key="yield_by_obligor")
         
@@ -1565,20 +2559,34 @@ elif page == "Portfolio Analysis":
         col1, col2 = st.columns(2)
         
         with col1:
-            fig_industry = px.bar(company_df.groupby('industry')['total_exposure'].sum().reset_index(), 
+            fig_industry = px.bar(dynamic_company_df.groupby('industry')['total_exposure'].sum().reset_index(), 
                                   x="industry", y="total_exposure", title="Exposure by Industry")
             st.plotly_chart(fig_industry, use_container_width=True, key="exposure_by_industry")
         
         with col2:
-            fig_rating = px.bar(company_df.groupby('credit_rating')['total_exposure'].sum().reset_index(),
+            fig_rating = px.bar(dynamic_company_df.groupby('credit_rating')['total_exposure'].sum().reset_index(),
                                 x="credit_rating", y="total_exposure", title="Exposure by Credit Rating")
             st.plotly_chart(fig_rating, use_container_width=True, key="exposure_by_rating")
 
     else:
         # Show selected company details
-        company_data = company_df[company_df['company'] == selected_company].iloc[0]
-        risk_data = risk_df[risk_df['company'] == selected_company].iloc[0]
-        company_transactions = transactions_extended_df[transactions_extended_df['company'] == selected_company]
+        company_data = dynamic_company_df[dynamic_company_df['company'] == selected_company].iloc[0]
+        
+        # Try to get risk data, but handle case where it doesn't exist for dynamic companies
+        try:
+            risk_data = risk_df[risk_df['company'] == selected_company].iloc[0]
+            has_risk_data = True
+        except:
+            has_risk_data = False
+            risk_data = None
+        
+        # Try to get transaction data, but handle case where it doesn't exist for dynamic companies
+        try:
+            company_transactions = transactions_extended_df[transactions_extended_df['company'] == selected_company]
+            has_transaction_data = not company_transactions.empty
+        except:
+            has_transaction_data = False
+            company_transactions = pd.DataFrame()
         
         st.subheader(f"📊 {selected_company} - Obligor Analysis")
         
@@ -1600,21 +2608,27 @@ elif page == "Portfolio Analysis":
             st.write(f"- Industry: {company_data['industry']}")
             st.write(f"- Credit Type: {company_data['credit_type']}")
             st.write(f"- Underwriting Bank: {company_data['underwriting_bank']}")
-            st.write(f"- Terms: {company_data['terms_tenor']}")
+            st.write(f"- Terms: {company_data['terms_tenor']} days")
             st.write(f"- Time Listed: {company_data['time_listed']}")
             st.write(f"- Spread: {company_data['spread_bps']} bps")
+            st.write(f"- Status: {company_data['status']}")
         
         with col2:
             st.write("**Risk Metrics:**")
-            st.write(f"- XGBoost PD: {risk_data['xgboost_pd']*100:.1f}%")
-            st.write(f"- Lévy Copula Tail Risk: {risk_data['levy_copula_tail_risk']*100:.1f}%")
-            st.write(f"- CDS Spread: {risk_data['cds_spread']} bps")
+            if has_risk_data:
+                st.write(f"- XGBoost PD: {risk_data['xgboost_pd']*100:.1f}%")
+                st.write(f"- Lévy Copula Tail Risk: {risk_data['levy_copula_tail_risk']*100:.1f}%")
+                st.write(f"- CDS Spread: {risk_data['cds_spread']} bps")
+            else:
+                st.write(f"- Calculated PD: {company_data['avg_pd']*100:.1f}%")
+                st.write(f"- Yield Spread: {company_data['spread_bps']} bps")
+                st.write(f"- Risk Level: {company_data['credit_rating']}")
             st.write(f"- 24h Notional Change: ${company_data['notional_24h_change']:,.0f}")
             st.write(f"- 24h CDS Fee Change: {company_data['cds_fee_24h_change']:.1f}%")
         
         # Transaction history with timeline
-        st.subheader("Transaction History (5-Day Timeline)")
-        if not company_transactions.empty:
+        st.subheader("Transaction History")
+        if has_transaction_data and not company_transactions.empty:
             # Convert date to datetime for proper plotting
             company_transactions['date'] = pd.to_datetime(company_transactions['date'])
             
@@ -1635,7 +2649,17 @@ elif page == "Portfolio Analysis":
             
             st.dataframe(company_transactions, use_container_width=True)
         else:
-            st.info("No transaction data available for this obligor.")
+            st.info("📊 **Live Transaction Data:** This company participates in the real-time transaction stream. Recent transactions are displayed on the Dashboard page under 'Live Transaction Stream'.")
+            
+            # Show live transaction data if available
+            if hasattr(st.session_state, 'live_transactions') and st.session_state.live_transactions:
+                company_live_tx = [tx for tx in st.session_state.live_transactions if tx['company_id'] == selected_company]
+                if company_live_tx:
+                    st.markdown("**🔄 Recent Live Transactions:**")
+                    live_tx_df = pd.DataFrame(company_live_tx)
+                    st.dataframe(live_tx_df[['transaction_id', 'type', 'amount', 'pd', 'credit_rating', 'industry']], use_container_width=True)
+                else:
+                    st.info("No recent live transactions for this company in the current update cycle.")
 
 elif page == "Technical Details":
     st.header("Technical Implementation")
@@ -2200,19 +3224,7 @@ elif page == "AI/ML Analytics":
 # ============================================================================
 # FOOTER SECTION
 # ============================================================================
-st.markdown("""
-<div style="background: rgba(255,255,255,0.95); padding: 2rem; border-radius: 1rem; margin-top: 2rem; box-shadow: 0 4px 20px rgba(0,0,0,0.08);">
-    <h4 style="margin: 0 0 1rem 0; color: #1e3c72; font-weight: 600;">📋 Important Disclaimers</h4>
-    <p style="margin: 0; color: #666; line-height: 1.6;">
-        <strong>Disclaimer:</strong> This report is for informational purposes only. Past performance does not guarantee future results. 
-        $BRICS involves credit risk and is not suitable for all investors. Please consult with your financial advisor before making any investment decisions.
-    </p>
-    <hr style="margin: 1rem 0; border: none; border-top: 1px solid #eee;">
-    <p style="margin: 0; color: #999; font-size: 0.9rem; text-align: center;">
-        © 2024 BRICS Protocol • AI-Native Synthetic Credit Platform • Built for Investor Due Diligence
-    </p>
-</div>
-""", unsafe_allow_html=True)
+create_contact_footer()
 
 # Auto-refresh for live mode
 if st.session_state.live_mode:
