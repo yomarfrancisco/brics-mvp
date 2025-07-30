@@ -36,6 +36,279 @@ import pandas as pd
 from fpdf import FPDF
 import plotly.io as pio
 
+# ============================================================================
+# EXPORT FUNCTIONS
+# ============================================================================
+
+def generate_excel_report():
+    """Generate comprehensive Excel report for due diligence"""
+    # Create Excel writer
+    output = io.BytesIO()
+    with pd.ExcelWriter(output, engine='openpyxl') as writer:
+        
+        # Protocol Overview
+        protocol_df.to_excel(writer, sheet_name='Protocol_Overview', index=False)
+        
+        # Portfolio Analysis
+        company_df.to_excel(writer, sheet_name='Portfolio_Analysis', index=False)
+        
+        # Price Data
+        brics_price_df.to_excel(writer, sheet_name='Price_Data', index=False)
+        
+        # Risk Metrics
+        risk_df.to_excel(writer, sheet_name='Risk_Metrics', index=False)
+        
+        # Cash Flow Waterfall
+        waterfall_df.to_excel(writer, sheet_name='Cash_Flow_Waterfall', index=False)
+        
+        # Summary Sheet
+        summary_data = {
+            'Metric': [
+                'Current $BRICS Price',
+                'Target APY',
+                'Total Portfolio Exposure',
+                'Weighted Portfolio PD',
+                'Capital Efficiency',
+                'Number of Obligors',
+                'Average Yield',
+                'Report Generated'
+            ],
+            'Value': [
+                f"${protocol_df[protocol_df['metric'] == 'brics_price']['value'].iloc[0]:.3f}",
+                f"{protocol_df[protocol_df['metric'] == 'apy_per_brics']['value'].iloc[0]:.1f}%",
+                f"${company_df['total_exposure'].sum():,.0f}",
+                f"{protocol_df[protocol_df['metric'] == 'weighted_pd']['value'].iloc[0]*100:.1f}%",
+                f"{protocol_df[protocol_df['metric'] == 'capital_efficiency']['value'].iloc[0]:.1f}x",
+                len(company_df),
+                f"{company_df['yield'].mean():.1f}%",
+                datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            ]
+        }
+        pd.DataFrame(summary_data).to_excel(writer, sheet_name='Executive_Summary', index=False)
+    
+    return output.getvalue()
+
+def generate_pdf_report():
+    """Generate professional PDF report for due diligence"""
+    pdf = FPDF()
+    pdf.add_page()
+    
+    # Title
+    pdf.set_font('Arial', 'B', 20)
+    pdf.cell(0, 20, 'BRICS Protocol Investment Report', ln=True, align='C')
+    pdf.ln(10)
+    
+    # Executive Summary
+    pdf.set_font('Arial', 'B', 16)
+    pdf.cell(0, 10, 'Executive Summary', ln=True)
+    pdf.set_font('Arial', '', 12)
+    
+    current_price = protocol_df[protocol_df['metric'] == 'brics_price']['value'].iloc[0]
+    apy = protocol_df[protocol_df['metric'] == 'apy_per_brics']['value'].iloc[0]
+    total_exposure = company_df['total_exposure'].sum()
+    
+    summary_text = f"""
+    Current $BRICS Price: ${current_price:.3f}
+    Target APY: {apy:.1f}%
+    Total Portfolio Exposure: ${total_exposure:,.0f}
+    Number of Obligors: {len(company_df)}
+    Report Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+    """
+    
+    for line in summary_text.strip().split('\n'):
+        if line.strip():
+            pdf.cell(0, 8, line.strip(), ln=True)
+    
+    pdf.ln(10)
+    
+    # Portfolio Overview
+    pdf.set_font('Arial', 'B', 14)
+    pdf.cell(0, 10, 'Portfolio Overview', ln=True)
+    pdf.set_font('Arial', '', 12)
+    
+    # Top 5 obligors
+    top_obligors = company_df.nlargest(5, 'total_exposure')
+    for _, row in top_obligors.iterrows():
+        pdf.cell(0, 8, f"{row['company']}: ${row['total_exposure']:,.0f} ({row['yield']:.1f}% yield)", ln=True)
+    
+    return pdf.output(dest='S').encode('latin-1')
+
+def create_export_buttons():
+    """Create export buttons for the dashboard"""
+    st.markdown("""
+    <div class="section-card">
+        <div class="section-header">📊 EXPORT REPORTS</div>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    col1, col2, col3 = st.columns(3)
+    
+    with col1:
+        if st.button("📄 Generate PDF Report", type="primary"):
+            try:
+                pdf_bytes = generate_pdf_report()
+                st.download_button(
+                    label="📥 Download PDF Report",
+                    data=pdf_bytes,
+                    file_name=f"BRICS_Investment_Report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf",
+                    mime="application/pdf"
+                )
+                st.success("✅ PDF report generated successfully!")
+            except Exception as e:
+                st.error(f"❌ Error generating PDF: {str(e)}")
+    
+    with col2:
+        if st.button("📊 Generate Excel Report", type="primary"):
+            try:
+                excel_bytes = generate_excel_report()
+                st.download_button(
+                    label="📥 Download Excel Report",
+                    data=excel_bytes,
+                    file_name=f"BRICS_Investment_Report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx",
+                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                )
+                st.success("✅ Excel report generated successfully!")
+            except Exception as e:
+                st.error(f"❌ Error generating Excel: {str(e)}")
+    
+    with col3:
+        if st.button("📈 Export Chart Data", type="primary"):
+            try:
+                # Export current price chart data
+                chart_data = brics_price_df.copy()
+                chart_data['export_timestamp'] = datetime.now()
+                
+                csv_bytes = chart_data.to_csv(index=False).encode('utf-8')
+                st.download_button(
+                    label="📥 Download Chart Data (CSV)",
+                    data=csv_bytes,
+                    file_name=f"BRICS_Price_Data_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
+                    mime="text/csv"
+                )
+                st.success("✅ Chart data exported successfully!")
+            except Exception as e:
+                st.error(f"❌ Error exporting data: {str(e)}")
+
+def check_alerts():
+    """Check for real-time alerts and notifications"""
+    alerts = []
+    
+    # Price alerts
+    current_price = protocol_df[protocol_df['metric'] == 'brics_price']['value'].iloc[0]
+    price_change = abs(current_price - 1.00) / 1.00 * 100
+    
+    if price_change > 5:
+        alerts.append({
+            'type': 'warning',
+            'message': f"⚠️ High price volatility: ${current_price:.3f} ({price_change:.1f}% from peg)",
+            'icon': '🔴'
+        })
+    elif price_change > 2:
+        alerts.append({
+            'type': 'info',
+            'message': f"📊 Price movement: ${current_price:.3f} ({price_change:.1f}% from peg)",
+            'icon': '🟡'
+        })
+    
+    # APY alerts
+    apy = protocol_df[protocol_df['metric'] == 'apy_per_brics']['value'].iloc[0]
+    if apy < 25:
+        alerts.append({
+            'type': 'warning',
+            'message': f"📉 Low APY: {apy:.1f}% (below target range)",
+            'icon': '🔴'
+        })
+    elif apy > 40:
+        alerts.append({
+            'type': 'info',
+            'message': f"📈 High APY: {apy:.1f}% (above target range)",
+            'icon': '🟢'
+        })
+    
+    # Risk alerts
+    weighted_pd = protocol_df[protocol_df['metric'] == 'weighted_pd']['value'].iloc[0]
+    if weighted_pd > 0.12:
+        alerts.append({
+            'type': 'error',
+            'message': f"🚨 High portfolio risk: {weighted_pd*100:.1f}% PD",
+            'icon': '🔴'
+        })
+    
+    # Performance alerts
+    if 'performance_summary' in globals():
+        try:
+            performance_summary = performance_monitor.get_performance_summary()
+            if 'current_metrics' in performance_summary:
+                cpu_usage = performance_summary['current_metrics'].get('cpu_percent', 0)
+                if cpu_usage > 80:
+                    alerts.append({
+                        'type': 'warning',
+                        'message': f"⚡ High CPU usage: {cpu_usage:.1f}%",
+                        'icon': '🟡'
+                    })
+        except:
+            pass
+    
+    return alerts
+
+def display_alerts():
+    """Display real-time alerts"""
+    alerts = check_alerts()
+    
+    if alerts:
+        st.markdown("""
+        <div class="section-card">
+            <div class="section-header">🚨 REAL-TIME ALERTS</div>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        for alert in alerts:
+            if alert['type'] == 'error':
+                st.error(f"{alert['icon']} {alert['message']}")
+            elif alert['type'] == 'warning':
+                st.warning(f"{alert['icon']} {alert['message']}")
+            else:
+                st.info(f"{alert['icon']} {alert['message']}")
+        
+        st.divider()
+
+def show_loading_state(message="Loading data..."):
+    """Show a loading state with spinner"""
+    st.markdown(f"""
+    <div class="loading-container">
+        <div style="text-align: center;">
+            <div style="font-size: 2rem; margin-bottom: 1rem;">⏳</div>
+            <div style="font-size: 1.1rem; color: #666;">{message}</div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+def show_error_state(error_message, retry_function=None):
+    """Show an error state with retry option"""
+    st.markdown(f"""
+    <div class="error-container">
+        <div style="text-align: center;">
+            <div style="font-size: 2rem; margin-bottom: 1rem;">❌</div>
+            <div style="font-size: 1.1rem; color: #d32f2f; margin-bottom: 1rem;">{error_message}</div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    if retry_function:
+        if st.button("🔄 Retry", type="primary"):
+            retry_function()
+
+def show_success_state(message="Operation completed successfully!"):
+    """Show a success state"""
+    st.markdown(f"""
+    <div class="success-container">
+        <div style="text-align: center;">
+            <div style="font-size: 2rem; margin-bottom: 1rem;">✅</div>
+            <div style="font-size: 1.1rem; color: #2e7d32;">{message}</div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
 st.set_page_config(
     page_title="$BRICS Investment Report", 
     layout="wide",
@@ -1944,277 +2217,4 @@ st.markdown("""
 # Auto-refresh for live mode
 if st.session_state.live_mode:
     time.sleep(3)  # Reduced to 3 seconds for ultra-fast updates
-    st.rerun() 
-
-# ============================================================================
-# EXPORT FUNCTIONS
-# ============================================================================
-
-def generate_excel_report():
-    """Generate comprehensive Excel report for due diligence"""
-    # Create Excel writer
-    output = io.BytesIO()
-    with pd.ExcelWriter(output, engine='openpyxl') as writer:
-        
-        # Protocol Overview
-        protocol_df.to_excel(writer, sheet_name='Protocol_Overview', index=False)
-        
-        # Portfolio Analysis
-        company_df.to_excel(writer, sheet_name='Portfolio_Analysis', index=False)
-        
-        # Price Data
-        brics_price_df.to_excel(writer, sheet_name='Price_Data', index=False)
-        
-        # Risk Metrics
-        risk_df.to_excel(writer, sheet_name='Risk_Metrics', index=False)
-        
-        # Cash Flow Waterfall
-        waterfall_df.to_excel(writer, sheet_name='Cash_Flow_Waterfall', index=False)
-        
-        # Summary Sheet
-        summary_data = {
-            'Metric': [
-                'Current $BRICS Price',
-                'Target APY',
-                'Total Portfolio Exposure',
-                'Weighted Portfolio PD',
-                'Capital Efficiency',
-                'Number of Obligors',
-                'Average Yield',
-                'Report Generated'
-            ],
-            'Value': [
-                f"${protocol_df[protocol_df['metric'] == 'brics_price']['value'].iloc[0]:.3f}",
-                f"{protocol_df[protocol_df['metric'] == 'apy_per_brics']['value'].iloc[0]:.1f}%",
-                f"${company_df['total_exposure'].sum():,.0f}",
-                f"{protocol_df[protocol_df['metric'] == 'weighted_pd']['value'].iloc[0]*100:.1f}%",
-                f"{protocol_df[protocol_df['metric'] == 'capital_efficiency']['value'].iloc[0]:.1f}x",
-                len(company_df),
-                f"{company_df['yield'].mean():.1f}%",
-                datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-            ]
-        }
-        pd.DataFrame(summary_data).to_excel(writer, sheet_name='Executive_Summary', index=False)
-    
-    return output.getvalue()
-
-def generate_pdf_report():
-    """Generate professional PDF report for due diligence"""
-    pdf = FPDF()
-    pdf.add_page()
-    
-    # Title
-    pdf.set_font('Arial', 'B', 20)
-    pdf.cell(0, 20, 'BRICS Protocol Investment Report', ln=True, align='C')
-    pdf.ln(10)
-    
-    # Executive Summary
-    pdf.set_font('Arial', 'B', 16)
-    pdf.cell(0, 10, 'Executive Summary', ln=True)
-    pdf.set_font('Arial', '', 12)
-    
-    current_price = protocol_df[protocol_df['metric'] == 'brics_price']['value'].iloc[0]
-    apy = protocol_df[protocol_df['metric'] == 'apy_per_brics']['value'].iloc[0]
-    total_exposure = company_df['total_exposure'].sum()
-    
-    summary_text = f"""
-    Current $BRICS Price: ${current_price:.3f}
-    Target APY: {apy:.1f}%
-    Total Portfolio Exposure: ${total_exposure:,.0f}
-    Number of Obligors: {len(company_df)}
-    Report Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
-    """
-    
-    for line in summary_text.strip().split('\n'):
-        if line.strip():
-            pdf.cell(0, 8, line.strip(), ln=True)
-    
-    pdf.ln(10)
-    
-    # Portfolio Overview
-    pdf.set_font('Arial', 'B', 14)
-    pdf.cell(0, 10, 'Portfolio Overview', ln=True)
-    pdf.set_font('Arial', '', 12)
-    
-    # Top 5 obligors
-    top_obligors = company_df.nlargest(5, 'total_exposure')
-    for _, row in top_obligors.iterrows():
-        pdf.cell(0, 8, f"{row['company']}: ${row['total_exposure']:,.0f} ({row['yield']:.1f}% yield)", ln=True)
-    
-    return pdf.output(dest='S').encode('latin-1')
-
-def create_export_buttons():
-    """Create export buttons for the dashboard"""
-    st.markdown("""
-    <div class="section-card">
-        <div class="section-header">📊 EXPORT REPORTS</div>
-    </div>
-    """, unsafe_allow_html=True)
-    
-    col1, col2, col3 = st.columns(3)
-    
-    with col1:
-        if st.button("📄 Generate PDF Report", type="primary"):
-            try:
-                pdf_bytes = generate_pdf_report()
-                st.download_button(
-                    label="📥 Download PDF Report",
-                    data=pdf_bytes,
-                    file_name=f"BRICS_Investment_Report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf",
-                    mime="application/pdf"
-                )
-                st.success("✅ PDF report generated successfully!")
-            except Exception as e:
-                st.error(f"❌ Error generating PDF: {str(e)}")
-    
-    with col2:
-        if st.button("📊 Generate Excel Report", type="primary"):
-            try:
-                excel_bytes = generate_excel_report()
-                st.download_button(
-                    label="📥 Download Excel Report",
-                    data=excel_bytes,
-                    file_name=f"BRICS_Investment_Report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx",
-                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                )
-                st.success("✅ Excel report generated successfully!")
-            except Exception as e:
-                st.error(f"❌ Error generating Excel: {str(e)}")
-    
-    with col3:
-        if st.button("📈 Export Chart Data", type="primary"):
-            try:
-                # Export current price chart data
-                chart_data = brics_price_df.copy()
-                chart_data['export_timestamp'] = datetime.now()
-                
-                csv_bytes = chart_data.to_csv(index=False).encode('utf-8')
-                st.download_button(
-                    label="📥 Download Chart Data (CSV)",
-                    data=csv_bytes,
-                    file_name=f"BRICS_Price_Data_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
-                    mime="text/csv"
-                )
-                st.success("✅ Chart data exported successfully!")
-            except Exception as e:
-                st.error(f"❌ Error exporting data: {str(e)}")
-
-def check_alerts():
-    """Check for real-time alerts and notifications"""
-    alerts = []
-    
-    # Price alerts
-    current_price = protocol_df[protocol_df['metric'] == 'brics_price']['value'].iloc[0]
-    price_change = abs(current_price - 1.00) / 1.00 * 100
-    
-    if price_change > 5:
-        alerts.append({
-            'type': 'warning',
-            'message': f"⚠️ High price volatility: ${current_price:.3f} ({price_change:.1f}% from peg)",
-            'icon': '🔴'
-        })
-    elif price_change > 2:
-        alerts.append({
-            'type': 'info',
-            'message': f"📊 Price movement: ${current_price:.3f} ({price_change:.1f}% from peg)",
-            'icon': '🟡'
-        })
-    
-    # APY alerts
-    apy = protocol_df[protocol_df['metric'] == 'apy_per_brics']['value'].iloc[0]
-    if apy < 25:
-        alerts.append({
-            'type': 'warning',
-            'message': f"📉 Low APY: {apy:.1f}% (below target range)",
-            'icon': '🔴'
-        })
-    elif apy > 40:
-        alerts.append({
-            'type': 'info',
-            'message': f"📈 High APY: {apy:.1f}% (above target range)",
-            'icon': '🟢'
-        })
-    
-    # Risk alerts
-    weighted_pd = protocol_df[protocol_df['metric'] == 'weighted_pd']['value'].iloc[0]
-    if weighted_pd > 0.12:
-        alerts.append({
-            'type': 'error',
-            'message': f"🚨 High portfolio risk: {weighted_pd*100:.1f}% PD",
-            'icon': '🔴'
-        })
-    
-    # Performance alerts
-    if 'performance_summary' in globals():
-        try:
-            performance_summary = performance_monitor.get_performance_summary()
-            if 'current_metrics' in performance_summary:
-                cpu_usage = performance_summary['current_metrics'].get('cpu_percent', 0)
-                if cpu_usage > 80:
-                    alerts.append({
-                        'type': 'warning',
-                        'message': f"⚡ High CPU usage: {cpu_usage:.1f}%",
-                        'icon': '🟡'
-                    })
-        except:
-            pass
-    
-    return alerts
-
-def display_alerts():
-    """Display real-time alerts"""
-    alerts = check_alerts()
-    
-    if alerts:
-        st.markdown("""
-        <div class="section-card">
-            <div class="section-header">🚨 REAL-TIME ALERTS</div>
-        </div>
-        """, unsafe_allow_html=True)
-        
-        for alert in alerts:
-            if alert['type'] == 'error':
-                st.error(f"{alert['icon']} {alert['message']}")
-            elif alert['type'] == 'warning':
-                st.warning(f"{alert['icon']} {alert['message']}")
-            else:
-                st.info(f"{alert['icon']} {alert['message']}")
-        
-        st.divider()
-
-def show_loading_state(message="Loading data..."):
-    """Show a loading state with spinner"""
-    st.markdown(f"""
-    <div class="loading-container">
-        <div style="text-align: center;">
-            <div style="font-size: 2rem; margin-bottom: 1rem;">⏳</div>
-            <div style="font-size: 1.1rem; color: #666;">{message}</div>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
-
-def show_error_state(error_message, retry_function=None):
-    """Show an error state with retry option"""
-    st.markdown(f"""
-    <div class="error-container">
-        <div style="text-align: center;">
-            <div style="font-size: 2rem; margin-bottom: 1rem;">❌</div>
-            <div style="font-size: 1.1rem; color: #d32f2f; margin-bottom: 1rem;">{error_message}</div>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
-    
-    if retry_function:
-        if st.button("🔄 Retry", type="primary"):
-            retry_function()
-
-def show_success_state(message="Operation completed successfully!"):
-    """Show a success state"""
-    st.markdown(f"""
-    <div class="success-container">
-        <div style="text-align: center;">
-            <div style="font-size: 2rem; margin-bottom: 1rem;">✅</div>
-            <div style="font-size: 1.1rem; color: #2e7d32;">{message}</div>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
+    st.rerun()
